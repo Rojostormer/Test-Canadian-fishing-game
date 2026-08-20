@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#08232b">
+<title>Canadian Waters — Safari Prototype</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#06151b;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;min-height:100%;touch-action:manipulation}
+body{padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom)}
+.app{max-width:680px;margin:auto;padding:12px 0 24px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+h1{font-size:24px;margin:0;font-weight:900;letter-spacing:.5px}
+.sub{font-size:12px;color:#9eb6bd;margin-top:3px}
+.stats{text-align:right;font-weight:800;font-size:14px}
+.card{background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:14px;margin:10px 0;box-shadow:0 8px 30px rgba(0,0,0,.18)}
+.lake{height:260px;border-radius:18px;overflow:hidden;position:relative;background:linear-gradient(#8cc8d3 0%,#2f8da3 35%,#0c536b 100%)}
+.sky{position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.32),transparent 45%)}
+.sun{position:absolute;width:55px;height:55px;border-radius:50%;background:#fff2bd;right:38px;top:25px;opacity:.9}
+.mountain{position:absolute;bottom:112px;width:0;height:0;border-left:90px solid transparent;border-right:90px solid transparent;border-bottom:110px solid #42656a;left:15px}
+.mountain.m2{left:130px;border-left-width:120px;border-right-width:120px;border-bottom-color:#36555c}
+.trees{position:absolute;bottom:95px;left:0;right:0;height:70px;background:linear-gradient(150deg,transparent 48%,#163d35 49% 60%,transparent 61%) 0 0/45px 70px repeat-x}
+.water{position:absolute;left:0;right:0;bottom:0;height:120px;background:repeating-linear-gradient(175deg,rgba(255,255,255,.13) 0 2px,transparent 2px 18px)}
+.boat{position:absolute;bottom:75px;left:50%;transform:translateX(-50%);font-size:42px;filter:drop-shadow(0 4px 2px rgba(0,0,0,.25))}
+.fishspot{position:absolute;right:19%;bottom:36px;font-size:30px;opacity:.85}
+.scene-label{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;font-size:12px;font-weight:800}
+.message{font-size:17px;font-weight:800;min-height:42px;display:flex;align-items:center}
+.meter{margin-top:10px}
+.meter label{font-size:11px;color:#9eb6bd}
+.bar{height:12px;background:#102c34;border-radius:99px;overflow:hidden;margin-top:4px}
+.fill{height:100%;width:20%;background:#4cc9f0;transition:width .15s}
+.fill.red{background:#ef5350}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+button,select{width:100%;min-height:50px;border:0;border-radius:13px;font-size:15px;font-weight:900;color:#fff;background:#1976d2}
+button.secondary{background:#29424a}
+button.danger{background:#a83b3b}
+button:disabled{opacity:.45}
+select{padding:0 10px;background:#29424a}
+.row{display:flex;gap:10px;align-items:center}
+.row>*{flex:1}
+.label{font-size:12px;color:#9eb6bd}
+.trophy{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.trophy:last-child{border-bottom:0}
+.hidden{display:none!important}
+.result{text-align:center}
+.bigfish{font-size:56px}
+.small{font-size:12px;color:#9eb6bd;line-height:1.4}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div><h1>CANADIAN WATERS</h1><div class="sub">Safari Prototype • Northern Ontario</div></div>
+  <div class="stats">$<span id="money">100</span><br><span id="xp">0</span> XP</div>
+</header>
+
+<section class="lake">
+  <div class="sky"></div><div class="sun"></div><div class="mountain"></div><div class="mountain m2"></div><div class="trees"></div><div class="water"></div>
+  <div class="boat">🛶</div><div class="fishspot">🐟</div>
+  <div class="scene-label"><span>06:40 AM</span><span>18 FT • WEED EDGE</span></div>
+</section>
+
+<section class="card">
+  <div class="message" id="message">Cast toward the weed edge.</div>
+  <div id="fightMeters" class="hidden">
+    <div class="meter"><label>LINE TENSION</label><div class="bar"><div id="tension" class="fill"></div></div></div>
+    <div class="meter"><label>FISH STAMINA</label><div class="bar"><div id="stamina" class="fill"></div></div></div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="row">
+    <div><div class="label">LURE</div>
+      <select id="lure">
+        <option value="spoon">Silver Spoon</option>
+        <option value="jig">Green Pumpkin Jig</option>
+        <option value="crank">Minnow Crankbait</option>
+      </select>
+    </div>
+  </div>
+  <div style="height:10px"></div>
+  <div id="buttons" class="actions">
+    <button id="cast">CAST</button>
+    <button id="reset" class="secondary hidden">NEW CAST</button>
+  </div>
+</section>
+
+<section id="result" class="card result hidden">
+  <div id="fishIcon" class="bigfish">🐟</div>
+  <h2 id="fishName">Fish</h2>
+  <div id="fishStats"></div>
+</section>
+
+<section class="card">
+  <h3 style="margin:0 0 8px">Trophy Book</h3>
+  <div class="trophy"><span>Smallmouth Bass</span><strong id="bestBass">No record</strong></div>
+  <div class="trophy"><span>Northern Pike</span><strong id="bestPike">No record</strong></div>
+  <div class="small" style="margin-top:8px">Fish caught: <span id="caught">0</span></div>
+</section>
+
+<section class="card small">
+<strong>Prototype controls:</strong> Cast, wait for the strike, set the hook, then balance reeling and letting the fish run. A full line-tension bar breaks the line.
+</section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let state={phase:"idle",money:100,xp:0,caught:0,bass:0,pike:0,fish:null,weight:0,length:0,tension:.2,stamina:1,timer:null};
+const lureBonus={
+ spoon:{bass:.90,pike:1.35}, jig:{bass:1.45,pike:.65}, crank:{bass:1.15,pike:1.20}
+};
+function msg(t){$("message").textContent=t}
+function render(){
+ $("money").textContent=state.money;$("xp").textContent=state.xp;$("caught").textContent=state.caught;
+ $("bestBass").textContent=state.bass?state.bass.toFixed(2)+" lb":"No record";
+ $("bestPike").textContent=state.pike?state.pike.toFixed(2)+" lb":"No record";
+ $("tension").style.width=(state.tension*100)+"%";$("tension").className="fill "+(state.tension>.8?"red":"");
+ $("stamina").style.width=(state.stamina*100)+"%";
+ $("fightMeters").classList.toggle("hidden",state.phase!=="fighting");
+}
+function setButtons(html){$("buttons").innerHTML=html}
+function cast(){
+ clearTimeout(state.timer);state.phase="casting";msg("Casting...");
+ setButtons('<button disabled>CASTING...</button>');
+ state.tension=.2;state.stamina=1;render();
+ state.timer=setTimeout(wait,700);
+}
+function wait(){
+ state.phase="waiting";msg("Lure is working. Watch for a strike.");
+ setButtons('<button disabled>WAITING FOR A BITE...</button>');
+ render();
+ state.timer=setTimeout(strike,1200+Math.random()*2800);
+}
+function strike(){
+ const l=lureBonus[$("lure").value], total=l.bass+l.pike, bass=Math.random()*total<l.bass;
+ state.fish=bass?"bass":"pike";
+ const min=bass?.7:2,max=bass?7:30;
+ state.weight=+(min+Math.pow(Math.random(),1.7)*(max-min)).toFixed(2);
+ state.length=Math.round((bass?13+state.weight*3:24+state.weight*1.5)+(Math.random()*5-2));
+ state.phase="hooked";msg("STRIKE! Set the hook.");
+ setButtons('<button id="hook">SET THE HOOK</button>');
+ $("hook").onclick=hook;render();
+}
+function hook(){
+ state.phase="fighting";state.tension=.45;state.stamina=1;msg("Fish on! Manage the line tension.");
+ setButtons('<button id="run" class="secondary">LET IT RUN</button><button id="reel">REEL IN</button>');
+ $("run").onclick=run;$("reel").onclick=reel;render();
+}
+function reel(){
+ state.tension=Math.min(1,state.tension+.03+Math.random()*.10);
+ if(Math.random()<.35)state.stamina-=.06+Math.random()*.08;
+ if(state.tension>=1){breakLine();return}
+ if(state.stamina<=0){land();return}
+ msg(state.tension>.8?"Too much tension! Let it run.":"Reeling... keep the pressure steady.");render();
+}
+function run(){
+ state.tension=Math.max(.18,state.tension-(.15+Math.random()*.13));
+ state.stamina=Math.max(0,state.stamina-(.02+Math.random()*.05));
+ msg("Fish is running. Tension is dropping.");render();
+}
+function breakLine(){
+ clearTimeout(state.timer);state.phase="idle";state.fish=null;msg("The fish broke the line.");state.tension=.2;
+ setButtons('<button id="cast">CAST</button>');$("cast").onclick=cast;render();
+}
+function land(){
+ state.phase="landed";state.caught++;
+ const reward=Math.floor(state.weight*8),gain=Math.floor(state.weight*12);
+ state.money+=reward;state.xp+=gain;
+ if(state.fish==="bass")state.bass=Math.max(state.bass,state.weight);else state.pike=Math.max(state.pike,state.weight);
+ const icon=state.fish==="bass"?"🐟":"🐊";
+ $("fishIcon").textContent=icon;$("fishName").textContent=state.fish==="bass"?"Smallmouth Bass":"Northern Pike";
+ $("fishStats").innerHTML=`<strong>${state.weight.toFixed(2)} lb</strong> • ${state.length} in<br><span class="small">+$${reward} credits • +${gain} XP</span>`;
+ $("result").classList.remove("hidden");msg("Landed! Trophy added to your book.");
+ setButtons('<button id="cast">CAST AGAIN</button>');$("cast").onclick=()=>{ $("result").classList.add("hidden");cast()};render();
+}
+$("cast").onclick=cast;
+render();
+</script>
+</body>
+</html>
