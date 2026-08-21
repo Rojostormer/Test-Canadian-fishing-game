@@ -106,12 +106,12 @@ select{padding:0 12px;background:#1a252c;border:1px solid rgba(255,255,255,.15)}
     <canvas id="scene" width="900" height="580"></canvas>
     
     <div class="hud" id="hud">
-      <div class="badge" id="timeBadge">06:40 AM</div>
+      <div class="badge" id="timeBadge">05:00 AM</div>
       <div class="spot-flag" id="spotFlag">WEED EDGE</div>
 
       <div class="topRightGroup" id="topControls">
         <button class="iconBtn" id="mapToggleBtn">MAP</button>
-        <button class="iconBtn" id="homeMenuBtn">LOCATION MENU</button>
+        <button class="iconBtn" id="homeMenuBtn">MAIN MENU</button>
       </div>
 
       <!-- Zoom controls -->
@@ -179,18 +179,37 @@ select{padding:0 12px;background:#1a252c;border:1px solid rgba(255,255,255,.15)}
         <button id="closeMapBtn" style="margin-top:14px;max-width:160px;min-height:40px;position:relative;z-index:210">CLOSE MAP</button>
       </div>
 
-      <!-- Location Menu -->
+      <!-- Location/Main Menu -->
       <div id="homeMenu" class="menuOverlay hidden">
-        <h2 style="margin:0 0 4px;font-size:22px;font-weight:900">ONTARIO GREAT LAKES</h2>
-        <div class="small">Select a fishing region to launch your boat</div>
+        <h2 style="margin:0 0 4px;font-size:22px;font-weight:900">MAIN MENU</h2>
+        <div class="small">Select a fishing region or open settings</div>
         <div class="menuGrid">
           <button class="secondary" onclick="switchLake('superior')">Lake Superior<br><span style="font-size:9px;color:#00ffcc">Deep • Salmon/Trout</span></button>
           <button class="secondary" onclick="switchLake('huron')">Lake Huron<br><span style="font-size:9px;color:#00ffcc">Islands • Pike/Walleye</span></button>
           <button class="secondary" onclick="switchLake('erie')">Lake Erie<br><span style="font-size:9px;color:#00ffcc">Shallow • Trophy Walleye</span></button>
           <button class="secondary" onclick="switchLake('ontario')">Lake Ontario<br><span style="font-size:9px;color:#00ffcc">Open Water • Steelhead</span></button>
         </div>
-        <button id="closeMenuBtn" style="margin-top:16px;max-width:180px;min-height:40px">RESUME</button>
+        <div style="display:flex;gap:10px;margin-top:16px;width:100%;max-width:400px">
+          <button id="openSettingsBtn" class="secondary" style="flex:1">SETTINGS</button>
+          <button id="closeMenuBtn" style="flex:1">RESUME</button>
+        </div>
       </div>
+
+      <!-- Settings Menu Modal -->
+      <div id="settingsMenu" class="menuOverlay hidden">
+        <h2 style="margin:0 0 4px;font-size:20px;font-weight:900">GAME SETTINGS</h2>
+        <div class="small" style="margin-bottom:16px">Customize your simulation options</div>
+        <div style="width:100%;max-width:320px;text-align:left">
+          <div class="label">DAY/NIGHT CLOCK SPEED</div>
+          <select id="timeSpeedSelect" style="margin-bottom:16px">
+            <option value="1">Real Time (1x)</option>
+            <option value="2">2x Speed</option>
+            <option value="5">5x Speed</option>
+          </select>
+        </div>
+        <button id="closeSettingsBtn" style="max-width:180px;min-height:40px;margin-top:10px">BACK TO MENU</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -304,8 +323,9 @@ const state={
   lurePos:null, castFrom:null, castT:0,
   aim:{active:false,x:0,y:0},
   strikeDeadline:0,
-  timeMinutes:6*60, // Starts at 6:00 AM
-  underwaterFishPos:{x:0,y:0,dir:1}
+  timeMinutes:5*60, // Starts at 05:00 AM
+  clockSpeedMultiplier: 1, // Default 1x
+  underwaterFishPos:{x:0,y:0,vx:0,vy:0,angle:0}
 };
 
 // Underwater Particles
@@ -316,7 +336,7 @@ const underwaterBubbles = Array.from({length:25}, ()=>({
   s: Math.random() * 40 + 20
 }));
 
-// Sonar Seabed History
+// Dynamic Topographical Sonar History
 const sonarFloorHistory = new Array(80).fill(65);
 const sonarFishArcs = [];
 
@@ -357,38 +377,31 @@ function getHotspotAt(x,y){
   return null;
 }
 
+/* Real-time Lake Topography Depth Sampler */
+function getExactDepthAt(x, y) {
+  const hs = getHotspotAt(x, y);
+  const baseDepth = LAKES[currentLakeKey].depth;
+  let dynamicOffset = Math.sin(x * 0.015) * 6 + Math.cos(y * 0.015) * 6;
+  if (hs) {
+    if (hs.type === 'dropoff') dynamicOffset += 16;
+    if (hs.type === 'rock') dynamicOffset -= 10;
+    if (hs.type === 'weed') dynamicOffset -= 5;
+  }
+  return Math.max(8, baseDepth + dynamicOffset);
+}
+
 /* ---------- Time of Day & Dynamic Color Gradients ---------- */
 function getTimeColors(){
   const hrs = (state.timeMinutes / 60) % 24;
   
   if(hrs >= 5 && hrs < 8){ // Dawn
-    return {
-      sky: ['#121b2d', '#8a4b38', '#e88948'],
-      water: ['#23414b', '#0d222a'],
-      light: 0.65,
-      label: 'DAWN'
-    };
+    return { sky: ['#121b2d', '#8a4b38', '#e88948'], water: ['#23414b', '#0d222a'], light: 0.65, label: 'DAWN' };
   } else if(hrs >= 8 && hrs < 17){ // Day
-    return {
-      sky: ['#1e5775', '#3f829d', '#87c3d9'],
-      water: ['#1a596b', '#031f28'],
-      light: 1.0,
-      label: 'DAY'
-    };
-  } else if(hrs >= 17 && hrs < 20){ // Dusk / Sunset
-    return {
-      sky: ['#1b1c3a', '#6d3042', '#d95d39'],
-      water: ['#1f3644', '#0a161d'],
-      light: 0.6,
-      label: 'DUSK'
-    };
+    return { sky: ['#1e5775', '#3f829d', '#87c3d9'], water: ['#1a596b', '#031f28'], light: 1.0, label: 'DAY' };
+  } else if(hrs >= 17 && hrs < 20){ // Dusk
+    return { sky: ['#1b1c3a', '#6d3042', '#d95d39'], water: ['#1f3644', '#0a161d'], light: 0.6, label: 'DUSK' };
   } else { // Night
-    return {
-      sky: ['#02060d', '#050d1a', '#0b192e'],
-      water: ['#061a24', '#01080d'],
-      light: 0.25,
-      label: 'NIGHT'
-    };
+    return { sky: ['#02060d', '#050d1a', '#0b192e'], water: ['#061a24', '#01080d'], light: 0.25, label: 'NIGHT' };
   }
 }
 
@@ -410,7 +423,20 @@ $('zoomOutBtn').addEventListener('click',()=>cameraZoom=Math.max(0.6,cameraZoom-
 $('homeMenuBtn').addEventListener('click',()=>$('homeMenu').classList.remove('hidden'));
 $('closeMenuBtn').addEventListener('click',()=>$('homeMenu').classList.add('hidden'));
 
-// Fix: Explicit Topography Map Modal Toggle
+/* Settings Menu Bindings */
+$('openSettingsBtn').addEventListener('click', () => {
+  $('homeMenu').classList.add('hidden');
+  $('settingsMenu').classList.remove('hidden');
+});
+$('closeSettingsBtn').addEventListener('click', () => {
+  $('settingsMenu').classList.add('hidden');
+  $('homeMenu').classList.remove('hidden');
+});
+$('timeSpeedSelect').addEventListener('change', (e) => {
+  state.clockSpeedMultiplier = parseFloat(e.target.value);
+});
+
+/* Map Modal Toggle */
 $('mapToggleBtn').addEventListener('click', e => {
   e.stopPropagation();
   $('fullMapModal').classList.remove('hidden');
@@ -426,6 +452,7 @@ function switchLake(key){
   const l = LAKES[key];
   $('currentLocationSub').textContent = `${l.name} • Ontario`;
   boat.x = CENTER.x; boat.y = CENTER.y - 200;
+  state.timeMinutes = 5 * 60; // Always start at 5 AM
   $('homeMenu').classList.add('hidden');
   setPhase('driving');
 }
@@ -439,7 +466,6 @@ function setPhase(p){
   $('fightWrap').classList.toggle('hidden',p!=='fighting');
   $('result').classList.toggle('hidden',p!=='landed');
 
-  // Remove Fish Finder and top controls during Underwater Fight
   const isFighting = p === 'fighting';
   $('sonarDash').style.opacity = isFighting ? '0' : '1';
   $('topControls').style.display = isFighting ? 'none' : 'flex';
@@ -573,7 +599,7 @@ function triggerStrike(){
 function setHook(){
   if(state.phase!=='strike') return;
   state.tension=.3; state.stamina=1.0;
-  state.underwaterFishPos = { x: VIEW_W * 0.65, y: VIEW_H * 0.5, dir: -1 };
+  state.underwaterFishPos = { x: VIEW_W * 0.65, y: VIEW_H * 0.5, vx: 0, vy: 0, angle: Math.PI };
   setPhase('fighting');
   $('fightMsg').textContent='Fish Hooked! Fight!';
 }
@@ -582,14 +608,17 @@ function reel(){
   if(state.phase!=='fighting') return;
   state.tension = Math.min(1, state.tension + .05 + Math.random()*.07);
   state.stamina = Math.max(0, state.stamina - (.05 + Math.random()*.06));
-  state.underwaterFishPos.x -= 14;
   
+  // Drag fish closer to surface/left side
+  state.underwaterFishPos.x -= 22;
+  state.underwaterFishPos.vy += (Math.random() - 0.5) * 40;
+
   if(state.tension >= 1){
     $('fightMsg').textContent = 'Line snapped!';
     setTimeout(()=>setPhase('driving'), 800);
     return;
   }
-  if(state.stamina <= 0 || state.underwaterFishPos.x <= VIEW_W * 0.2){ land(); return; }
+  if(state.stamina <= 0 || state.underwaterFishPos.x <= VIEW_W * 0.18){ land(); return; }
   $('fightMsg').textContent = state.tension > .8 ? 'CRITICAL TENSION!' : 'Reeling in...';
 }
 
@@ -597,7 +626,10 @@ function runLine(){
   if(state.phase!=='fighting') return;
   state.tension = Math.max(.1, state.tension - (.15 + Math.random()*.1));
   state.stamina = Math.max(0, state.stamina - (.01 + Math.random()*.02));
-  state.underwaterFishPos.x += 18;
+  
+  // Fish surges away
+  state.underwaterFishPos.x += 30;
+  state.underwaterFishPos.vy += (Math.random() - 0.5) * 60;
 }
 
 function land(){
@@ -649,8 +681,10 @@ function loop(now){
 }
 
 function update(dt){
-  // Dynamic Time Progress
-  state.timeMinutes = (state.timeMinutes + dt * 10) % 1440;
+  // Adjustable Time Progress (1x = ~24 mins full day, 2x, 5x)
+  const baseRate = 0.5 * state.clockSpeedMultiplier;
+  state.timeMinutes = (state.timeMinutes + dt * baseRate) % 1440;
+  
   const timeHours = Math.floor(state.timeMinutes / 60);
   const timeMins = Math.floor(state.timeMinutes % 60);
   const timeFormatted = `${String(timeHours).padStart(2,'0')}:${String(timeMins).padStart(2,'0')}`;
@@ -683,30 +717,48 @@ function update(dt){
     $('strikeBar').style.width = Math.max(0, (state.strikeDeadline / 1.3) * 100) + '%';
     if(state.strikeDeadline <= 0) setPhase('driving');
   } else if(state.phase === 'fighting'){
-    state.underwaterFishPos.y += Math.sin(performance.now() * 0.008) * 1.4;
+    // Natural underwater fish fight physics
+    const fish = state.underwaterFishPos;
+    fish.vy += Math.sin(performance.now() * 0.006) * 18;
+    fish.y += fish.vy * dt;
+    fish.vy *= 0.88;
+    
+    // Restrain within underwater depth boundaries
+    if(fish.y < VIEW_H * 0.25) fish.y = VIEW_H * 0.25;
+    if(fish.y > VIEW_H * 0.78) fish.y = VIEW_H * 0.78;
+
+    // Angle of fish head pointing towards direction of movement
+    fish.angle = Math.atan2(fish.vy, -15);
   }
 
-  // Sonar Seabed Generation
+  // Real-time Topographical Sonar Sampling
+  const currentDepth = getExactDepthAt(boat.x, boat.y);
+  const normalizedSonarY = Math.min(85, Math.max(25, currentDepth * 1.6));
+
+  if(Math.abs(boat.speed) > 2){
+    sonarFloorHistory.shift();
+    sonarFloorHistory.push(normalizedSonarY);
+  } else {
+    // Subtle stationary idle swell
+    sonarFloorHistory[sonarFloorHistory.length - 1] = normalizedSonarY + Math.sin(performance.now() * 0.003) * 1.5;
+  }
+
+  // Realistic Sonar Fish Spawning based on structures
   const hs = getHotspotAt(boat.x, boat.y);
-  let depthVal = 60 + Math.sin(boat.x * 0.01) * 12;
-  if(hs && hs.type === 'dropoff') depthVal += 22;
-  if(hs && hs.type === 'rock') depthVal -= 18;
+  let fishSpawnChance = 0.015;
+  if (hs) fishSpawnChance = hs.density * 0.08;
 
-  sonarFloorHistory.shift();
-  sonarFloorHistory.push(depthVal);
-
-  // Random Sonar Fish Arcs
-  if(Math.random() < (hs ? hs.density * 0.15 : 0.03)){
+  if (Math.random() < fishSpawnChance) {
     sonarFishArcs.push({
       x: 125,
-      y: depthVal - (10 + Math.random() * 30),
+      y: normalizedSonarY - (8 + Math.random() * 25),
       life: 1.0
     });
   }
 
   for(let i = sonarFishArcs.length - 1; i >= 0; i--){
-    sonarFishArcs[i].x -= 0.6;
-    sonarFishArcs[i].life -= 0.005;
+    if (Math.abs(boat.speed) > 2) sonarFishArcs[i].x -= Math.max(0.8, Math.abs(boat.speed) * 0.02);
+    sonarFishArcs[i].life -= 0.004;
     if(sonarFishArcs[i].x < 0 || sonarFishArcs[i].life <= 0) sonarFishArcs.splice(i, 1);
   }
 
@@ -722,7 +774,7 @@ function update(dt){
   if(hs) $('spotFlag').textContent = hs.name;
 }
 
-/* ---------- 1st Person & Dynamic Environment Renderers ---------- */
+/* ---------- First Person Rendering ---------- */
 function drawFirstPerson(){
   ctx.clearRect(0, 0, VIEW_W, VIEW_H);
   const theme = getTimeColors();
@@ -734,14 +786,14 @@ function drawFirstPerson(){
   skyGrad.addColorStop(1, theme.sky[2]);
   ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, VIEW_W, VIEW_H * 0.45);
 
-  // Water Surface Gradient
+  // Water Surface
   const horizonY = VIEW_H * 0.42;
   const waterGrad = ctx.createLinearGradient(0, horizonY, 0, VIEW_H);
   waterGrad.addColorStop(0, theme.water[0]);
   waterGrad.addColorStop(1, theme.water[1]);
   ctx.fillStyle = waterGrad; ctx.fillRect(0, horizonY, VIEW_W, VIEW_H - horizonY);
 
-  // Shoreline
+  // Shoreline Raycasting
   const fov = 1.1 / cameraZoom, numRays = 120, rayStep = fov / numRays;
   const startAngle = boat.heading - fov / 2;
   ctx.fillStyle = `rgba(18, 46, 33, ${theme.light})`;
@@ -771,19 +823,19 @@ function drawFirstPerson(){
   ctx.beginPath(); ctx.moveTo(VIEW_W * 0.1, VIEW_H); ctx.lineTo(VIEW_W * 0.5, VIEW_H * 0.78); ctx.lineTo(VIEW_W * 0.9, VIEW_H); ctx.fill();
 }
 
-/* ---------- Enhanced Detailed Underwater Fight Screen ---------- */
+/* ---------- Underwater Fight Screen (Fish at end of line) ---------- */
 function drawUnderwaterFightView(dt){
   ctx.clearRect(0, 0, VIEW_W, VIEW_H);
   const theme = getTimeColors();
 
-  // Deep Water Column Gradient
+  // Water Column
   const bgGrad = ctx.createLinearGradient(0, 0, 0, VIEW_H);
   bgGrad.addColorStop(0, theme.water[0]);
   bgGrad.addColorStop(0.6, theme.water[1]);
   bgGrad.addColorStop(1, '#010608');
   ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
-  // Dynamic Ambient Light Shafts
+  // Dynamic Light Shafts
   ctx.fillStyle = `rgba(255,255,255,${0.06 * theme.light})`;
   for(let i=0; i<6; i++){
     ctx.beginPath();
@@ -794,7 +846,7 @@ function drawUnderwaterFightView(dt){
     ctx.fill();
   }
 
-  // Floating Particles / Bubbles
+  // Bubbles
   ctx.fillStyle = 'rgba(255,255,255,0.3)';
   for(const b of underwaterBubbles){
     b.y -= b.s * dt;
@@ -802,7 +854,7 @@ function drawUnderwaterFightView(dt){
     ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
   }
 
-  // Detailed Seabed Structure
+  // Bottom Seabed
   ctx.fillStyle = '#081210';
   ctx.beginPath();
   ctx.moveTo(0, VIEW_H * 0.80);
@@ -810,57 +862,49 @@ function drawUnderwaterFightView(dt){
   ctx.quadraticCurveTo(VIEW_W*0.88, VIEW_H*0.88, VIEW_W, VIEW_H*0.82);
   ctx.lineTo(VIEW_W, VIEW_H); ctx.lineTo(0, VIEW_H); ctx.fill();
 
-  // Weed lines & Underwater Rocks
-  const hs = getHotspotAt(boat.x, boat.y);
-  if(hs && hs.type === 'weed'){
-    ctx.strokeStyle = '#184724'; ctx.lineWidth = 6;
-    for(let x=40; x<VIEW_W; x+=45){
-      ctx.beginPath();
-      ctx.moveTo(x, VIEW_H*0.82);
-      ctx.quadraticCurveTo(x + Math.sin(performance.now()*0.003 + x)*15, VIEW_H*0.6, x, VIEW_H*0.48);
-      ctx.stroke();
-    }
-  } else {
-    ctx.fillStyle = '#1c282e';
-    ctx.beginPath(); ctx.arc(VIEW_W*0.25, VIEW_H*0.82, 42, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(VIEW_W*0.75, VIEW_H*0.86, 58, 0, Math.PI*2); ctx.fill();
-  }
+  const fishPos = state.underwaterFishPos;
 
-  // High-Tension Line
+  // Tension Fishing Line connected directly to fish mouth
   ctx.strokeStyle = state.tension > 0.8 ? '#ff3366' : 'rgba(255,255,255,0.85)';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(0, VIEW_H * 0.08);
-  ctx.lineTo(state.underwaterFishPos.x, state.underwaterFishPos.y);
+  ctx.moveTo(0, VIEW_H * 0.1);
+  ctx.lineTo(fishPos.x - 35, fishPos.y);
   ctx.stroke();
 
-  // Struggling Hooked Fish Illustration
+  // Fish attached to line end
   ctx.save();
-  ctx.translate(state.underwaterFishPos.x, state.underwaterFishPos.y);
+  ctx.translate(fishPos.x, fishPos.y);
+  ctx.rotate(fishPos.angle);
   ctx.scale(0.85, 0.85);
+
   const meta = speciesMeta[state.fish];
   const svgStr = fishSVGs[meta ? meta.svg : 'bass'];
   const img = new Image();
   img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svgStr);
   ctx.drawImage(img, -60, -30, 120, 60);
+
+  // Hook visible in mouth
+  ctx.strokeStyle = '#c0c0c0'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(-50, 0, 6, 0, Math.PI); ctx.stroke();
   ctx.restore();
 }
 
-/* ---------- Restored Classic Fish Finder / Sonar Visual ---------- */
+/* ---------- Topographical Fish Finder Renderer ---------- */
 function drawSonar(){
   const sCanvas = $('sonarCanvas'), sCtx = sCanvas.getContext('2d');
   const w = sCanvas.width, h = sCanvas.height;
   
   sCtx.fillStyle = '#020b08'; sCtx.fillRect(0, 0, w, h);
 
-  // Depth Grid Markers
+  // Grid
   sCtx.strokeStyle = 'rgba(0, 255, 170, 0.15)';
   sCtx.lineWidth = 1;
   for(let y=18; y<h; y+=18){
     sCtx.beginPath(); sCtx.moveTo(0, y); sCtx.lineTo(w, y); sCtx.stroke();
   }
 
-  // Draw Bottom Seabed Contour
+  // Seabed Profile driven by boat movement over topography
   sCtx.fillStyle = '#2d5e38';
   sCtx.strokeStyle = '#00ffaa';
   sCtx.lineWidth = 2;
@@ -874,7 +918,7 @@ function drawSonar(){
   sCtx.lineTo(w, h);
   sCtx.fill(); sCtx.stroke();
 
-  // Draw Fish Arcs
+  // Draw Natural Fish Arcs
   for(const arc of sonarFishArcs){
     sCtx.strokeStyle = `rgba(255, 202, 40, ${arc.life})`;
     sCtx.lineWidth = 2;
@@ -884,7 +928,7 @@ function drawSonar(){
   }
 }
 
-/* ---------- Full Lake Map Overlay Renderer ---------- */
+/* ---------- Full Lake Topography Map Overlay ---------- */
 function renderFullMap(){
   const mCanvas = $('fullMapCanvas'), mCtx = mCanvas.getContext('2d');
   const w = mCanvas.width, h = mCanvas.height;
@@ -899,7 +943,7 @@ function renderFullMap(){
   for(let i=1; i<lakePts.length; i++) mCtx.lineTo(lakePts[i].x * sx, lakePts[i].y * sy);
   mCtx.fill();
 
-  // Hotspot Zones
+  // Hotspots
   for(const hs of hotspots){
     mCtx.fillStyle = hs.type === 'weed' ? 'rgba(46,125,50,0.5)' : hs.type === 'rock' ? 'rgba(120,144,156,0.5)' : 'rgba(2,119,189,0.5)';
     mCtx.beginPath();
@@ -910,7 +954,7 @@ function renderFullMap(){
     mCtx.fillText(hs.name, (hs.x - 28) * sx, hs.y * sy);
   }
 
-  // Boat Indicator
+  // Boat Location Indicator
   mCtx.fillStyle = '#ff4d6d';
   mCtx.beginPath();
   mCtx.arc(boat.x * sx, boat.y * sy, 6, 0, Math.PI * 2);
