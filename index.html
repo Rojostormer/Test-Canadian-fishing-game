@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#030c10">
-<title>Canadian Waters — Great Lakes Pro Fishing</title>
+<title>Canadian Waters — Pro Fishing Simulation</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
 html,body{margin:0;background:#030c10;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;min-height:100%;touch-action:pan-y;overscroll-behavior:none}
@@ -27,27 +27,31 @@ h1{font-size:20px;margin:0;font-weight:900;letter-spacing:.6px;background:linear
 .spot-flag{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#ffca28,#f57c00);color:#120a00;border-radius:99px;padding:6px 16px;font-size:11px;font-weight:900;opacity:0;transition:all .3s ease;box-shadow:0 4px 16px rgba(245,124,0,.5);letter-spacing:.5px}
 .spot-flag.show{opacity:1}
 
-/* zoom & menu controls */
+/* zoom & top controls */
 .topRightGroup{position:absolute;top:12px;right:12px;display:flex;gap:8px;align-items:center}
 .iconBtn{height:36px;padding:0 12px;border-radius:10px;background:rgba(8,24,32,.65);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2);color:#fff;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .zoomControls{position:absolute;top:56px;left:12px;display:flex;flex-direction:column;gap:8px}
 
-/* dashboards moved to top right below top controls */
+/* dashboards: fish finder top right */
 .dashboard{position:absolute;top:56px;right:12px;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.dashBox{width:105px;height:75px;background:rgba(6,18,24,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.18);border-radius:12px;overflow:hidden;position:relative;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.dashBox{width:115px;height:85px;background:rgba(6,18,24,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.18);border-radius:12px;overflow:hidden;position:relative;box-shadow:0 6px 20px rgba(0,0,0,.4)}
 .dashLabel{position:absolute;top:3px;left:6px;font-size:8px;font-weight:900;color:#00ffcc;letter-spacing:.6px;z-index:2;text-shadow:0 0 4px rgba(0,255,204,.5)}
 .dashBox canvas{width:100%;height:100%;display:block}
 
-/* joystick (moved to bottom left) */
+/* joystick (far left bottom) */
 .stick{position:absolute;left:14px;bottom:14px;width:94px;height:94px;border-radius:50%;background:rgba(255,255,255,.06);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:2px solid rgba(255,255,255,.25);touch-action:none;box-shadow:0 6px 20px rgba(0,0,0,.3)}
 .stick .knob{position:absolute;width:42px;height:42px;left:24px;top:24px;border-radius:50%;background:linear-gradient(135deg,rgba(255,255,255,.8),rgba(255,255,255,.3));border:2px solid rgba(255,255,255,.9);box-shadow:0 4px 10px rgba(0,0,0,.4)}
 
-/* action buttons (bottom right) */
+/* action buttons */
 .actionGroup{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px}
 .mainBtn{width:96px;height:46px;border-radius:14px;background:linear-gradient(135deg,#ff7b00,#e65100);color:#fff;font-weight:900;font-size:13px;border:1px solid rgba(255,255,255,.4);box-shadow:0 6px 18px rgba(230,81,0,.4);letter-spacing:.4px;cursor:pointer}
 .mainBtn.reel{background:linear-gradient(135deg,#00b4d8,#0077b6);box-shadow:0 6px 18px rgba(0,119,182,.4)}
 .aimHint{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(8,24,32,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:8px 18px;border-radius:99px;font-size:12px;font-weight:800;text-align:center;white-space:nowrap;border:1px solid rgba(255,255,255,.2);box-shadow:0 6px 20px rgba(0,0,0,.4)}
 .cancelAim{position:absolute;right:14px;bottom:14px;width:76px;height:46px;border-radius:14px;background:linear-gradient(135deg,#e63946,#d62828);color:#fff;font-weight:900;font-size:11px;border:1px solid rgba(255,255,255,.3);box-shadow:0 6px 18px rgba(214,40,40,.4);cursor:pointer}
+
+/* full map overlay modal */
+.mapOverlayModal{position:absolute;inset:0;background:rgba(3,12,16,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);z-index:120;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px}
+.mapOverlayModal canvas{border-radius:16px;border:1px solid rgba(255,255,255,.2);box-shadow:0 12px 36px rgba(0,0,0,.8);max-width:100%;max-height:70vh}
 
 /* menus & overlays */
 .menuOverlay{position:absolute;inset:0;background:rgba(3,12,16,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
@@ -106,28 +110,25 @@ select{padding:0 12px;background:#1a252c;border:1px solid rgba(255,255,255,.15)}
       <div class="spot-flag" id="spotFlag">WEED EDGE</div>
 
       <div class="topRightGroup">
+        <button class="iconBtn" id="mapToggleBtn">MAP</button>
         <button class="iconBtn" id="homeMenuBtn">LOCATION MENU</button>
       </div>
 
-      <!-- Zoom controls (left side) -->
+      <!-- Zoom controls -->
       <div class="zoomControls">
         <button class="iconBtn" id="zoomInBtn" style="width:36px">+</button>
         <button class="iconBtn" id="zoomOutBtn" style="width:36px">−</button>
       </div>
 
-      <!-- Dashboard displays: Fish Finder & Overview Map (top right stacked) -->
+      <!-- Fish Finder Sonar Dashboard -->
       <div class="dashboard">
         <div class="dashBox">
           <div class="dashLabel">FISH FINDER</div>
-          <canvas id="sonarCanvas" width="105" height="75"></canvas>
-        </div>
-        <div class="dashBox">
-          <div class="dashLabel">MAP OVERVIEW</div>
-          <canvas id="mapCanvas" width="105" height="75"></canvas>
+          <canvas id="sonarCanvas" width="115" height="85"></canvas>
         </div>
       </div>
 
-      <!-- driving controls (joystick on bottom-left) -->
+      <!-- Driving controls (joystick on bottom-left) -->
       <div id="driveControls">
         <div class="stick" id="stick"><div class="knob" id="knob"></div></div>
         <div class="actionGroup">
@@ -135,7 +136,7 @@ select{padding:0 12px;background:#1a252c;border:1px solid rgba(255,255,255,.15)}
         </div>
       </div>
 
-      <!-- waiting / retrieve line controls -->
+      <!-- Waiting / retrieve line controls -->
       <div id="waitControls" class="hidden">
         <div id="waitOverlay" style="position:absolute;left:50%;bottom:18px;transform:translateX(-50%)">
           <div class="message" id="waitMsg" style="background:rgba(8,24,32,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:8px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.18);box-shadow:0 6px 20px rgba(0,0,0,.4)"></div>
@@ -145,20 +146,20 @@ select{padding:0 12px;background:#1a252c;border:1px solid rgba(255,255,255,.15)}
         </div>
       </div>
 
-      <!-- aiming controls -->
+      <!-- Aiming controls -->
       <div id="aimControls" class="hidden">
         <div class="aimHint" id="aimHint">Drag on the water to aim, release to cast</div>
         <button class="cancelAim" id="cancelAimBtn">CANCEL</button>
       </div>
 
-      <!-- set the hook prompt -->
+      <!-- Hook strike prompt -->
       <div id="hookPrompt" class="hookPrompt hidden">
         <div class="message" id="hookMsg">STRIKE!</div>
         <div class="strikeTimer"><i id="strikeBar"></i></div>
         <button id="hookBtn">SET THE HOOK</button>
       </div>
 
-      <!-- fight controls -->
+      <!-- Underwater fight controls -->
       <div id="fightWrap" class="fightWrap hidden">
         <div class="message" id="fightMsg" style="margin-bottom:6px"></div>
         <div class="meterRow">
@@ -171,7 +172,14 @@ select{padding:0 12px;background:#1a252c;border:1px solid rgba(255,255,255,.15)}
         </div>
       </div>
 
-      <!-- Home / Location Select Menu -->
+      <!-- Full Interactive Map Overlay -->
+      <div id="fullMapModal" class="mapOverlayModal hidden">
+        <h3 style="margin:0 0 10px;font-size:16px;font-weight:900">LAKE TOPOGRAPHY MAP</h3>
+        <canvas id="fullMapCanvas" width="600" height="420"></canvas>
+        <button id="closeMapBtn" style="margin-top:14px;max-width:160px;min-height:40px">CLOSE MAP</button>
+      </div>
+
+      <!-- Location Menu -->
       <div id="homeMenu" class="menuOverlay hidden">
         <h2 style="margin:0 0 4px;font-size:22px;font-weight:900">ONTARIO GREAT LAKES</h2>
         <div class="small">Select a fishing region to launch your boat</div>
@@ -265,7 +273,6 @@ const speciesMeta = {
   crappie: { label: 'Black Crappie', min: 0.4, max: 3, lenBase: 8, lenMul: 3.2, svg: 'perch' }
 };
 
-// Modifiers for lures and baits
 const tacklePrefs = {
   lures: {
     spoon: { salmon: 2.2, trout: 2.0, steelhead: 1.8, pike: 1.3 },
@@ -282,7 +289,7 @@ const tacklePrefs = {
   }
 };
 
-/* ---------- world setup ---------- */
+/* ---------- World & Environmental Features ---------- */
 const WORLD_W=2200, WORLD_H=1600;
 const CENTER={x:WORLD_W/2,y:WORLD_H/2};
 
@@ -299,10 +306,11 @@ const state={
   lurePos:null, castFrom:null, castT:0,
   aim:{active:false,x:0,y:0},
   strikeDeadline:0,
-  timeMinutes:6*60+40
+  timeMinutes:6*60+40,
+  underwaterFishPos:{x:0,y:0,dir:1}
 };
 
-// Map lakes
+// Lake Geometry
 const baseR=560;
 const lakePts=[];
 for(let i=0;i<200;i++){
@@ -311,13 +319,15 @@ for(let i=0;i<200;i++){
   lakePts.push({x:CENTER.x+Math.cos(a)*r,y:CENTER.y+Math.sin(a)*r*0.82});
 }
 
+/* Natural Environmental Structure Hotspots */
 const hotspots=[
-  {x:CENTER.x-330,y:CENTER.y+260,r:150,name:"WEED EDGE"},
-  {x:CENTER.x+380,y:CENTER.y-260,r:140,name:"ROCKY POINT"},
-  {x:CENTER.x+120,y:CENTER.y+330,r:130,name:"DEEP DROP-OFF"}
+  {x:CENTER.x-330,y:CENTER.y+260,r:150,name:"WEED BED",type:"weed",density:0.85},
+  {x:CENTER.x+380,y:CENTER.y-260,r:140,name:"ROCKY REEF",type:"rock",density:0.90},
+  {x:CENTER.x+120,y:CENTER.y+330,r:130,name:"DEEP DROP-OFF",type:"dropoff",density:0.80},
+  {x:CENTER.x-220,y:CENTER.y-300,r:120,name:"BOULDER FIELD",type:"rock",density:0.75}
 ];
 
-/* ---------- collision mask ---------- */
+/* Collision Mask Initialization */
 const maskCanvas=document.createElement('canvas');
 maskCanvas.width=WORLD_W;maskCanvas.height=WORLD_H;
 const mctx=maskCanvas.getContext('2d');
@@ -331,12 +341,13 @@ function isWater(x,y){
   if(x<0||y<0||x>=WORLD_W||y>=WORLD_H) return false;
   return maskData[((y|0)*WORLD_W+(x|0))*4]>128;
 }
-function hotspotNear(x,y){
+
+function getHotspotAt(x,y){
   for(const h of hotspots){ if(Math.hypot(h.x-x,h.y-y)<h.r) return h; }
   return null;
 }
 
-/* ---------- state UI ---------- */
+/* ---------- State UI Management ---------- */
 const canvas=$('scene');
 const ctx=canvas.getContext('2d');
 let VIEW_W=900,VIEW_H=580;
@@ -353,6 +364,12 @@ $('zoomInBtn').addEventListener('click',()=>cameraZoom=Math.min(2.0,cameraZoom+0
 $('zoomOutBtn').addEventListener('click',()=>cameraZoom=Math.max(0.6,cameraZoom-0.2));
 $('homeMenuBtn').addEventListener('click',()=>$('homeMenu').classList.remove('hidden'));
 $('closeMenuBtn').addEventListener('click',()=>$('homeMenu').classList.add('hidden'));
+
+$('mapToggleBtn').addEventListener('click',()=>{
+  $('fullMapModal').classList.remove('hidden');
+  renderFullMap();
+});
+$('closeMapBtn').addEventListener('click',()=>$('fullMapModal').classList.add('hidden'));
 
 function switchLake(key){
   currentLakeKey = key;
@@ -373,15 +390,14 @@ function setPhase(p){
   $('result').classList.toggle('hidden',p!=='landed');
 }
 
-/* ---------- inputs (Joystick on bottom-left) ---------- */
+/* ---------- Steering & Joystick Input Controls ---------- */
 const stickEl=$('stick'), knobEl=$('knob');
 function stickCenter(){
   const r=stickEl.getBoundingClientRect();
   return {x:r.left+r.width/2,y:r.top+r.height/2,radius:r.width/2};
 }
-function setKnob(dx,dy){
-  knobEl.style.left=(24+dx)+'px'; knobEl.style.top=(24+dy)+'px';
-}
+function setKnob(dx,dy){ knobEl.style.left=(24+dx)+'px'; knobEl.style.top=(24+dy)+'px'; }
+
 stickEl.addEventListener('pointerdown',e=>{
   if(state.phase!=='driving') return;
   joy.active=true;joy.id=e.pointerId;
@@ -389,9 +405,7 @@ stickEl.addEventListener('pointerdown',e=>{
   updateStick(e);
 });
 stickEl.addEventListener('pointermove',e=>{ if(joy.active&&e.pointerId===joy.id) updateStick(e); });
-function endStick(e){
-  if(joy.active&&(!e||e.pointerId===joy.id)){ joy.active=false;joy.dx=0;joy.dy=0;setKnob(0,0); }
-}
+function endStick(e){ if(joy.active&&(!e||e.pointerId===joy.id)){ joy.active=false;joy.dx=0;joy.dy=0;setKnob(0,0); } }
 stickEl.addEventListener('pointerup',endStick);
 stickEl.addEventListener('pointercancel',endStick);
 function updateStick(e){
@@ -404,7 +418,7 @@ function updateStick(e){
   setKnob(dx,dy);
 }
 
-/* aiming drag */
+/* Aiming Drag Controls */
 let aimPointerId=null;
 canvas.addEventListener('pointerdown',e=>{
   if(state.phase!=='aiming') return;
@@ -431,7 +445,7 @@ $('runBtn').addEventListener('click',runLine);
 $('castAgainBtn').addEventListener('click',()=>{ setPhase('aiming'); state.aim.active=false; });
 $('backToBoatBtn').addEventListener('click',()=>{ setPhase('driving'); });
 
-/* ---------- Fishing Mechanics & Preferences ---------- */
+/* ---------- Advanced Realistic Fishing & Environmental Logic ---------- */
 function launchCast(){
   const screenDx = state.aim.x - VIEW_W/2, screenDy = (VIEW_H*0.85) - state.aim.y;
   if(screenDy < 20){ setPhase('driving'); return; }
@@ -447,7 +461,31 @@ function launchCast(){
   state.lurePos = {x:targetX, y:targetY};
   state.castT = 0;
   setPhase('casting');
-  $('waitMsg').textContent = 'Casting...';
+  $('waitMsg').textContent = 'Casting line...';
+}
+
+function processWaterWaiting(dt){
+  state.waitTimer -= dt;
+  if(state.waitTimer <= 0){
+    // Calculate bite probability based on environmental variables
+    const spot = getHotspotAt(state.lurePos.x, state.lurePos.y);
+    let biteChance = 0.12; // Base open water chance
+
+    if(spot) biteChance += spot.density * 0.55; // Structure bonus
+    
+    // Time of day bonus (Dawn/Dusk boost)
+    const hour = Math.floor(state.timeMinutes / 60);
+    if(hour >= 5 && hour <= 8) biteChance += 0.20;
+
+    if(Math.random() < biteChance){
+      triggerStrike();
+    } else {
+      // Skunk / No Fish Bite
+      const missedMsgs = ["No bites nearby...", "Lure drifted past...", "Fish ignored the bait...", "Quiet waters..."];
+      $('waitMsg').textContent = missedMsgs[Math.floor(Math.random() * missedMsgs.length)];
+      setTimeout(()=>{ if(state.phase === 'waiting') setPhase('driving'); }, 1400);
+    }
+  }
 }
 
 function triggerStrike(){
@@ -458,7 +496,6 @@ function triggerStrike(){
   const lureMods = tacklePrefs.lures[activeLure] || {};
   const baitMods = tacklePrefs.baits[activeBait] || {};
 
-  // Compute weight table for fish in current lake
   let totalWeight = 0;
   const pool = lake.species.map(s => {
     let weight = 1.0;
@@ -483,28 +520,32 @@ function triggerStrike(){
 
 function setHook(){
   if(state.phase!=='strike') return;
-  state.tension=.4; state.stamina=1;
+  state.tension=.3; state.stamina=1.0;
+  state.underwaterFishPos = { x: VIEW_W * 0.65, y: VIEW_H * 0.5, dir: -1 };
   setPhase('fighting');
-  $('fightMsg').textContent='Fish on!';
+  $('fightMsg').textContent='Fish Hooked! Fight!';
 }
 
 function reel(){
   if(state.phase!=='fighting') return;
-  state.tension = Math.min(1, state.tension + .04 + Math.random()*.08);
-  if(Math.random() < .4) state.stamina -= .06 + Math.random()*.08;
+  state.tension = Math.min(1, state.tension + .05 + Math.random()*.07);
+  state.stamina = Math.max(0, state.stamina - (.05 + Math.random()*.06));
+  state.underwaterFishPos.x -= 12; // Pull towards boat
+  
   if(state.tension >= 1){
     $('fightMsg').textContent = 'Line snapped!';
-    setTimeout(()=>setPhase('driving'), 600);
+    setTimeout(()=>setPhase('driving'), 800);
     return;
   }
-  if(state.stamina <= 0){ land(); return; }
-  $('fightMsg').textContent = state.tension > .8 ? 'High Tension!' : 'Reeling in...';
+  if(state.stamina <= 0 || state.underwaterFishPos.x <= VIEW_W * 0.22){ land(); return; }
+  $('fightMsg').textContent = state.tension > .8 ? 'CRITICAL TENSION!' : 'Reeling in...';
 }
 
 function runLine(){
   if(state.phase!=='fighting') return;
-  state.tension = Math.max(.15, state.tension - (.14 + Math.random()*.12));
-  state.stamina = Math.max(0, state.stamina - (.02 + Math.random()*.04));
+  state.tension = Math.max(.1, state.tension - (.15 + Math.random()*.1));
+  state.stamina = Math.max(0, state.stamina - (.01 + Math.random()*.02));
+  state.underwaterFishPos.x += 18; // Fish pulls away
 }
 
 function land(){
@@ -537,17 +578,22 @@ function renderRecords(){
   });
 }
 
-/* ---------- loop & physics ---------- */
-const sonarHistory = new Array(100).fill(15);
+/* ---------- Main Game Loop & Dynamic Renderers ---------- */
+const sonarHistory = new Array(80).fill(0);
 let lastT = performance.now();
 
 function loop(now){
   const dt = Math.min(.05, (now - lastT) / 1000);
   lastT = now;
   update(dt);
-  drawFirstPerson();
+
+  if(state.phase === 'fighting'){
+    drawUnderwaterFightView();
+  } else {
+    drawFirstPerson();
+  }
+
   drawSonar();
-  drawOverviewMap();
   requestAnimationFrame(loop);
 }
 
@@ -569,22 +615,27 @@ function update(dt){
     state.castT += dt / 0.6;
     if(state.castT >= 1){
       setPhase('waiting');
-      state.waitTimer = 1.0 + Math.random() * 2.2;
-      $('waitMsg').textContent = 'Lure set. Waiting for fish...';
+      state.waitTimer = 1.8 + Math.random() * 2.5;
+      $('waitMsg').textContent = 'Lure set. Waiting for bites...';
     }
   } else if(state.phase === 'waiting'){
-    state.waitTimer -= dt;
-    if(state.waitTimer <= 0) triggerStrike();
+    processWaterWaiting(dt);
   } else if(state.phase === 'strike'){
     state.strikeDeadline -= dt;
     $('strikeBar').style.width = Math.max(0, (state.strikeDeadline / 1.3) * 100) + '%';
     if(state.strikeDeadline <= 0) setPhase('driving');
+  } else if(state.phase === 'fighting'){
+    // Fish movement wiggle
+    state.underwaterFishPos.y += Math.sin(performance.now() * 0.008) * 1.2;
   }
 
-  // Sonar data
-  if(Math.random() < 0.2){
-    sonarHistory.shift();
-    sonarHistory.push(LAKES[currentLakeKey].depth + Math.sin(boat.x * 0.01) * 4 + (Math.random()-0.5)*2);
+  // Sonar Data Processing
+  const spot = getHotspotAt(boat.x, boat.y);
+  sonarHistory.shift();
+  if(spot && Math.random() < spot.density){
+    sonarHistory.push(1); // Fish detected arc
+  } else {
+    sonarHistory.push(0); // Clear water
   }
 
   // UI Updates
@@ -595,16 +646,16 @@ function update(dt){
   $('tension').className = 'fill ' + (state.tension > .8 ? 'red' : '');
   $('stamina').style.width = (state.stamina * 100) + '%';
 
-  const hs = hotspotNear(boat.x, boat.y);
+  const hs = getHotspotAt(boat.x, boat.y);
   $('spotFlag').classList.toggle('show', !!hs && state.phase === 'driving');
   if(hs) $('spotFlag').textContent = hs.name;
 }
 
-/* ---------- rendering ---------- */
+/* ---------- Render First-Person View & Underwater Fight View ---------- */
 function drawFirstPerson(){
   ctx.clearRect(0, 0, VIEW_W, VIEW_H);
 
-  // Horizon & Sky
+  // Horizon & Sky Gradient
   const skyGrad = ctx.createLinearGradient(0, 0, 0, VIEW_H * 0.45);
   skyGrad.addColorStop(0, '#04151f'); skyGrad.addColorStop(1, '#2c5d73');
   ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, VIEW_W, VIEW_H * 0.45);
@@ -614,7 +665,7 @@ function drawFirstPerson(){
   waterGrad.addColorStop(0, '#12414d'); waterGrad.addColorStop(1, '#021117');
   ctx.fillStyle = waterGrad; ctx.fillRect(0, horizonY, VIEW_W, VIEW_H - horizonY);
 
-  // Shorelines
+  // Raycasted Shoreline
   const fov = 1.1 / cameraZoom, numRays = 120, rayStep = fov / numRays;
   const startAngle = boat.heading - fov / 2;
   ctx.fillStyle = '#122e21';
@@ -631,49 +682,136 @@ function drawFirstPerson(){
     }
   }
 
-  // Aim Line
+  // Aiming Line
   if(state.phase === 'aiming' && state.aim.active){
     ctx.strokeStyle = '#ffca28'; ctx.setLineDash([6, 6]); ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(VIEW_W / 2, VIEW_H * 0.85); ctx.lineTo(state.aim.x, state.aim.y); ctx.stroke();
     ctx.setLineDash([]);
   }
 
-  // Cockpit Rod Overlay
+  // Boat Dashboard Line
   ctx.fillStyle = '#111820';
   ctx.beginPath(); ctx.moveTo(VIEW_W * 0.1, VIEW_H); ctx.lineTo(VIEW_W * 0.5, VIEW_H * 0.78); ctx.lineTo(VIEW_W * 0.9, VIEW_H); ctx.fill();
 }
 
+function drawUnderwaterFightView(){
+  ctx.clearRect(0, 0, VIEW_W, VIEW_H);
+
+  // Deep Underwater Environment
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+  bgGrad.addColorStop(0, '#063847');
+  bgGrad.addColorStop(0.7, '#021e28');
+  bgGrad.addColorStop(1, '#010d12');
+  ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+  // Sun Rays Effect
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  for(let i=0; i<5; i++){
+    ctx.beginPath();
+    ctx.moveTo(VIEW_W*0.1 + i*160, 0);
+    ctx.lineTo(VIEW_W*0.2 + i*160, 0);
+    ctx.lineTo(VIEW_W*0.3 + i*180, VIEW_H);
+    ctx.lineTo(VIEW_W*0.15 + i*180, VIEW_H);
+    ctx.fill();
+  }
+
+  // Lakebed / Seabed
+  ctx.fillStyle = '#091512';
+  ctx.beginPath();
+  ctx.moveTo(0, VIEW_H * 0.82);
+  ctx.quadraticCurveTo(VIEW_W*0.4, VIEW_H*0.75, VIEW_W, VIEW_H*0.85);
+  ctx.lineTo(VIEW_W, VIEW_H); ctx.lineTo(0, VIEW_H); ctx.fill();
+
+  // Draw Environmental Rocks & Weed Obstacles
+  const hs = getHotspotAt(boat.x, boat.y);
+  if(hs && hs.type === 'weed'){
+    ctx.fillStyle = '#1a4a28';
+    for(let x=40; x<VIEW_W; x+=70){
+      ctx.fillRect(x, VIEW_H*0.6, 12, VIEW_H*0.3);
+    }
+  } else if(hs && hs.type === 'rock'){
+    ctx.fillStyle = '#2c393f';
+    ctx.beginPath(); ctx.arc(VIEW_W*0.3, VIEW_H*0.82, 45, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(VIEW_W*0.7, VIEW_H*0.85, 60, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Fishing Line to Hooked Fish
+  ctx.strokeStyle = state.tension > 0.8 ? '#ff4d6d' : 'rgba(255,255,255,0.7)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, VIEW_H * 0.1);
+  ctx.lineTo(state.underwaterFishPos.x, state.underwaterFishPos.y);
+  ctx.stroke();
+
+  // Fish Icon/Silhouette Struggling
+  ctx.save();
+  ctx.translate(state.underwaterFishPos.x, state.underwaterFishPos.y);
+  ctx.scale(0.8, 0.8);
+  const meta = speciesMeta[state.fish];
+  const svgStr = fishSVGs[meta ? meta.svg : 'bass'];
+  const img = new Image();
+  img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svgStr);
+  ctx.drawImage(img, -60, -30, 120, 60);
+  ctx.restore();
+}
+
+/* ---------- Sonar & Full Topo Map Rendering ---------- */
 function drawSonar(){
   const sCanvas = $('sonarCanvas'), sCtx = sCanvas.getContext('2d');
   const w = sCanvas.width, h = sCanvas.height;
   sCtx.fillStyle = '#010f0a'; sCtx.fillRect(0, 0, w, h);
-  sCtx.strokeStyle = '#00ffaa'; sCtx.lineWidth = 1.5; sCtx.beginPath();
+
+  const lakeDepth = LAKES[currentLakeKey].depth;
+  sCtx.strokeStyle = 'rgba(0,255,170,0.2)';
+  sCtx.strokeRect(2, 2, w-4, h-4);
+
+  // Draw Sonar Arcs only where fish probability exists
   for(let i=0; i<sonarHistory.length; i++){
-    const x = (i / sonarHistory.length) * w;
-    const y = h - (sonarHistory[i] / 60) * h;
-    if(i===0) sCtx.moveTo(x, y); else sCtx.lineTo(x, y);
+    if(sonarHistory[i] === 1){
+      const x = (i / sonarHistory.length) * w;
+      const y = h * 0.45 + Math.sin(i * 0.3) * 10;
+      sCtx.strokeStyle = '#00ffcc';
+      sCtx.lineWidth = 2;
+      sCtx.beginPath();
+      sCtx.arc(x, y, 6, Math.PI * 1.1, Math.PI * 1.9);
+      sCtx.stroke();
+    }
   }
-  sCtx.stroke();
 }
 
-function drawOverviewMap(){
-  const mCanvas = $('mapCanvas'), mCtx = mCanvas.getContext('2d');
+function renderFullMap(){
+  const mCanvas = $('fullMapCanvas'), mCtx = mCanvas.getContext('2d');
   const w = mCanvas.width, h = mCanvas.height;
-  mCtx.fillStyle = '#041410'; mCtx.fillRect(0, 0, w, h);
+  mCtx.fillStyle = '#020d12'; mCtx.fillRect(0, 0, w, h);
 
   const sx = w / WORLD_W, sy = h / WORLD_H;
-  mCtx.fillStyle = '#083c48'; mCtx.beginPath();
+
+  // Render Water Body
+  mCtx.fillStyle = '#083c48';
+  mCtx.beginPath();
   mCtx.moveTo(lakePts[0].x * sx, lakePts[0].y * sy);
   for(let i=1; i<lakePts.length; i++) mCtx.lineTo(lakePts[i].x * sx, lakePts[i].y * sy);
   mCtx.fill();
 
+  // Render Environmental Hotspots (Weeds, Drop-offs, Rocks)
+  for(const hs of hotspots){
+    mCtx.fillStyle = hs.type === 'weed' ? 'rgba(46,125,50,0.45)' : hs.type === 'rock' ? 'rgba(120,144,156,0.45)' : 'rgba(2,119,189,0.45)';
+    mCtx.beginPath();
+    mCtx.arc(hs.x * sx, hs.y * sy, hs.r * sx, 0, Math.PI * 2);
+    mCtx.fill();
+    mCtx.fillStyle = '#fff';
+    mCtx.font = '9px sans-serif';
+    mCtx.fillText(hs.name, (hs.x - 30) * sx, hs.y * sy);
+  }
+
+  // Render Boat Marker
   mCtx.fillStyle = '#ff4d6d';
   mCtx.beginPath();
-  mCtx.arc(boat.x * sx, boat.y * sy, 3, 0, Math.PI*2);
+  mCtx.arc(boat.x * sx, boat.y * sy, 6, 0, Math.PI * 2);
   mCtx.fill();
 }
 
-/* ---------- boot ---------- */
+/* ---------- Game Initialization ---------- */
 fitCanvas();
 renderRecords();
 setPhase('driving');
