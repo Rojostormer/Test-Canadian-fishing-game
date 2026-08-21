@@ -240,7 +240,7 @@ const fishSVGs = {
 const speciesImages = {};
 Object.keys(fishSVGs).forEach(key => {
   const img = new Image();
-  img.src = 'data:image/svg+xml;utf8,+encodeURIComponent(fishSVGs[key]);
+  img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(fishSVGs[key]);
   speciesImages[key] = img;
 });
 
