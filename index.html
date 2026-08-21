@@ -488,7 +488,6 @@ function updateAim(e){
 $('castBtn').addEventListener('click', () => { if(state.phase === 'driving'){ state.aim.active = false; setPhase('aiming'); } });
 $('cancelAimBtn').addEventListener('click', () => { setPhase('driving'); });
 
-// Press-and-hold bindings for retrieving lure line
 const retrieveBtn = $('retrieveBtn');
 const startReeling = (e) => {
   if (e) e.preventDefault();
@@ -630,117 +629,103 @@ function triggerStrikeFromUnderwater(pickedSpecies){
   state.underwaterFishPos = { x: state.retrievingLure.x, y: state.retrievingLure.y, vx: 0, vy: 0, angle: Math.PI };
   
   setPhase('fighting');
-  $('fightMsg').textContent = 'STRIKE! Fish Hooked!';
+  $('fightMsg').textContent = `FISH ON! A ${meta.label} bit!`;
+  updateMeters();
 }
 
 function reel(){
   if(state.phase !== 'fighting' || isEndingFight) return;
-  
-  state.tension = Math.min(1, state.tension + .05 + Math.random()*.07);
-  state.stamina = Math.max(0, state.stamina - (.05 + Math.random()*.06));
-  
-  state.underwaterFishPos.x = Math.max(0, state.underwaterFishPos.x - 22);
-  state.underwaterFishPos.vy += (Math.random() - 0.5) * 40;
-
-  if(state.tension >= 1){
-    isEndingFight = true;
-    $('fightMsg').textContent = 'Line snapped!';
-    setTimeout(() => setPhase('driving'), 800);
-    return;
-  }
-  
-  if(state.stamina <= 0 || state.underwaterFishPos.x <= VIEW_W * 0.18){ 
-    isEndingFight = true;
-    land(); 
-    return; 
-  }
-  
-  $('fightMsg').textContent = state.tension > .8 ? 'CRITICAL TENSION!' : 'Reeling in...';
+  state.tension = Math.min(1.0, state.tension + 0.18);
+  state.stamina = Math.max(0.0, state.stamina - 0.08);
+  updateMeters();
+  checkFightState();
 }
 
 function runLine(){
   if(state.phase !== 'fighting' || isEndingFight) return;
-  state.tension = Math.max(.1, state.tension - (.15 + Math.random()*.1));
-  state.stamina = Math.max(0, state.stamina - (.01 + Math.random()*.02));
-  
-  state.underwaterFishPos.x = Math.min(VIEW_W, state.underwaterFishPos.x + 30);
-  state.underwaterFishPos.vy += (Math.random() - 0.5) * 60;
+  state.tension = Math.max(0.0, state.tension - 0.22);
+  state.stamina = Math.min(1.0, state.stamina + 0.03);
+  updateMeters();
+  checkFightState();
 }
 
-function land(){
-  state.caught++;
-  const reward = Math.floor(state.weight * 7), gain = Math.floor(state.weight * 10);
-  state.money += reward; state.xp += gain;
-  
-  if(!state.records[state.fish] || state.weight > state.records[state.fish]){
-    state.records[state.fish] = state.weight;
+function checkFightState(){
+  if(isEndingFight) return;
+
+  if(state.tension >= 1.0){
+    isEndingFight = true;
+    $('fightMsg').textContent = 'SNAP! The line broke!';
+    setTimeout(() => setPhase('driving'), 1400);
+  } else if(state.stamina <= 0.01){
+    isEndingFight = true;
+    $('fightMsg').textContent = 'Landed it!';
+    setTimeout(landFish, 900);
   }
-  
-  const meta = speciesMeta[state.fish] || speciesMeta.bass;
+}
+
+function landFish(){
+  const meta = speciesMeta[state.fish];
+  const payout = Math.round(state.weight * 12 + 15);
+  const xpEarned = Math.round(state.weight * 8 + 20);
+
+  state.money += payout;
+  state.xp += xpEarned;
+  state.caught += 1;
+
+  if(!state.records[state.fish] || state.weight > state.records[state.fish].weight){
+    state.records[state.fish] = { weight: state.weight, length: state.length };
+  }
+
+  $('money').textContent = state.money;
+  $('xp').textContent = state.xp;
+  $('caught').textContent = state.caught;
+  updateTrophyGrid();
+
   $('fishSvgContainer').innerHTML = fishSVGs[meta.svg] || fishSVGs.bass;
   $('fishName').textContent = meta.label;
-  $('fishStats').innerHTML = `<strong>${state.weight.toFixed(2)} lb</strong> • ${state.length} in<br><span class="small">+$${reward} credits • +${gain} XP</span>`;
-  renderRecords();
+  $('fishStats').innerHTML = `<strong>${state.weight} lbs</strong> • ${state.length} inches<br><span style="color:#00ffcc">+$${payout} & +${xpEarned} XP</span>`;
+
   setPhase('landed');
 }
 
-function renderRecords(){
+function updateMeters(){
+  const tEl = $('tension'), sEl = $('stamina');
+  tEl.style.width = (state.tension * 100) + '%';
+  sEl.style.width = (state.stamina * 100) + '%';
+  tEl.classList.toggle('red', state.tension > 0.75);
+}
+
+function updateTrophyGrid(){
   const grid = $('trophyGrid');
   grid.innerHTML = '';
-  Object.keys(speciesMeta).forEach(key => {
-    const meta = speciesMeta[key];
-    const rec = state.records[key];
-    const div = document.createElement('div');
-    div.className = 'trophy';
-    div.innerHTML = `<span>${meta.label}</span><strong>${rec ? rec.toFixed(2)+' lb' : '—'}</strong>`;
-    grid.appendChild(div);
+  Object.keys(speciesMeta).forEach(k => {
+    const rec = state.records[k];
+    const item = document.createElement('div');
+    item.className = 'trophy';
+    item.innerHTML = `<span>${speciesMeta[k].label}</span><strong>${rec ? rec.weight + ' lbs' : '—'}</strong>`;
+    grid.appendChild(item);
   });
 }
+updateTrophyGrid();
 
-let lastT = performance.now();
+let lastTime = performance.now();
+function gameLoop(now){
+  const dt = Math.min(0.1, (now - lastTime) / 1000);
+  lastTime = now;
 
-function loop(now){
-  const dt = Math.min(.05, Math.max(0.001, (now - lastT) / 1000));
-  lastT = now;
-  update(dt);
-
-  if(state.phase === 'fighting' || state.phase === 'casting' || state.phase === 'waiting'){
-    drawUnderwaterScreen(dt);
-  } else {
-    drawFirstPerson();
-  }
-  drawSonar();
-
-  requestAnimationFrame(loop);
-}
-
-function update(dt){
-  const baseRate = 0.5 * state.clockSpeedMultiplier;
-  state.timeMinutes = (state.timeMinutes + dt * baseRate) % 1440;
-  
-  const timeHours = Math.floor(state.timeMinutes / 60);
-  const timeMins = Math.floor(state.timeMinutes % 60);
-  const timeFormatted = `${String(timeHours).padStart(2,'0')}:${String(timeMins).padStart(2,'0')}`;
-  $('timeBadge').textContent = `${timeFormatted} • ${getTimeColors().label}`;
+  state.timeMinutes += (dt * 10) * state.clockSpeedMultiplier;
+  const hrs = Math.floor((state.timeMinutes / 60) % 24);
+  const mins = Math.floor(state.timeMinutes % 60);
+  const ampm = hrs >= 12 ? 'PM' : 'AM';
+  const displayHrs = hrs % 12 === 0 ? 12 : hrs % 12;
+  $('timeBadge').textContent = `${displayHrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')} ${ampm}`;
 
   if(state.phase === 'driving'){
-    const targetTurn = joy.dx * 1.5;
-    const targetThrottle = -joy.dy;
-
-    boat.turnRate += (targetTurn - boat.turnRate) * 4.0 * dt;
-    boat.heading += boat.turnRate * (Math.abs(boat.speed) / 120 + 0.1) * dt;
-
-    const maxForward = 160, maxReverse = -45;
-    const accelRate = targetThrottle > 0 ? 90 : 50;
-    const drag = 0.85;
-
-    if(Math.abs(targetThrottle) > 0.1){
-      boat.speed += targetThrottle * accelRate * dt;
-    } else {
-      boat.speed *= Math.pow(drag, dt * 5);
-    }
-
-    boat.speed = Math.max(maxReverse, Math.min(maxForward, boat.speed));
+    boat.turnRate = joy.dx * 2.2;
+    boat.heading += boat.turnRate * dt;
+    boat.accel = -joy.dy * 260;
+    boat.speed += boat.accel * dt;
+    boat.speed *= Math.pow(0.25, dt);
 
     const nx = boat.x + Math.cos(boat.heading) * boat.speed * dt;
     const ny = boat.y + Math.sin(boat.heading) * boat.speed * dt;
@@ -751,258 +736,249 @@ function update(dt){
       boat.speed = -boat.speed * 0.4;
     }
 
-    distanceAccumulator += Math.abs(boat.speed) * dt;
+    const distMoved = Math.abs(boat.speed * dt);
+    distanceAccumulator += distMoved;
+    if(distanceAccumulator > 8){
+      distanceAccumulator = 0;
+      const d = getExactDepthAt(boat.x, boat.y);
+      sonarFloorHistory.shift();
+      sonarFloorHistory.push(d);
+
+      let foundArc = false;
+      for(const f of worldFishPool){
+        if(Math.hypot(f.x - boat.x, f.y - boat.y) < 60){
+          sonarFishArcs.push({ x: 125, depthRatio: f.depthRatio, life: 1.0 });
+          foundArc = true;
+          break;
+        }
+      }
+    }
+
+    const activeHs = getHotspotAt(boat.x, boat.y);
+    const flag = $('spotFlag');
+    if(activeHs){
+      flag.textContent = activeHs.name;
+      flag.classList.add('show');
+    } else {
+      flag.classList.remove('show');
+    }
   }
 
   if(state.phase === 'casting' || state.phase === 'waiting'){
     processUnderwaterRetrieval(dt);
-  } else if(state.phase === 'fighting'){
-    const fish = state.underwaterFishPos;
-    fish.vy += Math.sin(performance.now() * 0.006) * 18;
-    fish.y += fish.vy * dt;
-    fish.vy *= 0.88;
-    
-    if(fish.y < VIEW_H * 0.25) fish.y = VIEW_H * 0.25;
-    if(fish.y > VIEW_H * 0.78) fish.y = VIEW_H * 0.78;
-
-    fish.angle = Math.atan2(fish.vy, -20);
   }
 
-  if(distanceAccumulator >= 3.5){
-    distanceAccumulator = 0;
-    const currentDepth = getExactDepthAt(boat.x, boat.y);
-    const normalizedSonarY = Math.min(85, Math.max(25, currentDepth * 1.6));
-
-    sonarFloorHistory.shift();
-    sonarFloorHistory.push(normalizedSonarY);
-
-    const detectedWorldFish = worldFishPool.filter(f => Math.hypot(f.x - boat.x, f.y - boat.y) < 70);
-    
-    if(detectedWorldFish.length > 0){
-      const targetF = detectedWorldFish[0];
-      if(!targetF.species){
-        const lake = LAKES[currentLakeKey];
-        targetF.species = lake.species[Math.floor(Math.random() * lake.species.length)];
-      }
-      sonarFishArcs.push({
-        x: 125,
-        y: normalizedSonarY - (targetF.depthRatio * 30 + 5),
-        life: 1.0
-      });
-    }
-
-    for(let i = sonarFishArcs.length - 1; i >= 0; i--){
-      sonarFishArcs[i].x -= 1.8;
-      if(sonarFishArcs[i].x < 0) sonarFishArcs.splice(i, 1);
-    }
+  if(state.phase === 'fighting' && !isEndingFight){
+    state.tension = Math.max(0.05, state.tension - 0.08 * dt);
+    state.stamina = Math.min(1.0, state.stamina + 0.04 * dt);
+    updateMeters();
   }
 
-  $('money').textContent = state.money;
-  $('xp').textContent = state.xp;
-  $('caught').textContent = state.caught;
-  $('tension').style.width = (state.tension * 100) + '%';
-  $('tension').className = 'fill ' + (state.tension > .8 ? 'red' : '');
-  $('stamina').style.width = (state.stamina * 100) + '%';
-
-  const hs = getHotspotAt(boat.x, boat.y);
-  $('spotFlag').classList.toggle('show', !!hs && state.phase === 'driving');
-  if(hs) $('spotFlag').textContent = hs.name;
+  render();
+  renderSonar();
+  requestAnimationFrame(gameLoop);
 }
 
-function drawFirstPerson(){
-  ctx.clearRect(0, 0, VIEW_W, VIEW_H);
-  const theme = getTimeColors();
+function renderSonar(){
+  const sCanvas = $('sonarCanvas');
+  const sCtx = sCanvas.getContext('2d');
+  sCtx.fillStyle = '#030d12';
+  sCtx.fillRect(0, 0, 125, 95);
 
-  const skyGrad = ctx.createLinearGradient(0, 0, 0, VIEW_H * 0.45);
-  skyGrad.addColorStop(0, theme.sky[0]);
-  skyGrad.addColorStop(0.5, theme.sky[1]);
-  skyGrad.addColorStop(1, theme.sky[2]);
-  ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, VIEW_W, VIEW_H * 0.45);
-
-  const horizonY = VIEW_H * 0.42;
-  const waterGrad = ctx.createLinearGradient(0, horizonY, 0, VIEW_H);
-  waterGrad.addColorStop(0, theme.water[0]);
-  waterGrad.addColorStop(1, theme.water[1]);
-  ctx.fillStyle = waterGrad; ctx.fillRect(0, horizonY, VIEW_W, VIEW_H - horizonY);
-
-  const fov = 1.1 / cameraZoom, numRays = 120, rayStep = fov / numRays;
-  const startAngle = boat.heading - fov / 2;
-  ctx.fillStyle = `rgba(18, 46, 33, ${theme.light})`;
-  
-  for(let i=0; i<numRays; i++){
-    const angle = startAngle + i * rayStep;
-    let dist = 20;
-    while(dist < 650){
-      if(!isWater(boat.x + Math.cos(angle)*dist, boat.y + Math.sin(angle)*dist)) break;
-      dist += 14;
-    }
-    if(dist < 650){
-      const wallHeight = Math.min(VIEW_H * 0.35, (16000 / (dist * Math.cos(angle - boat.heading))) * cameraZoom);
-      ctx.fillRect((i / numRays) * VIEW_W, horizonY - wallHeight * 0.8, (VIEW_W / numRays) + 1, wallHeight * 0.82);
-    }
+  sCtx.strokeStyle = 'rgba(0, 255, 204, 0.15)';
+  sCtx.lineWidth = 1;
+  for(let y = 15; y < 95; y += 20){
+    sCtx.beginPath(); sCtx.moveTo(0, y); sCtx.lineTo(125, y); sCtx.stroke();
   }
+
+  sCtx.fillStyle = '#113a2d';
+  sCtx.beginPath();
+  sCtx.moveTo(0, 95);
+  for(let i = 0; i < sonarFloorHistory.length; i++){
+    const x = (i / (sonarFloorHistory.length - 1)) * 125;
+    const depthVal = sonarFloorHistory[i];
+    const y = Math.min(90, 20 + (depthVal / 60) * 65);
+    sCtx.lineTo(x, y);
+  }
+  sCtx.lineTo(125, 95);
+  sCtx.fill();
+
+  sCtx.strokeStyle = '#00ffcc';
+  sCtx.lineWidth = 2;
+  sCtx.beginPath();
+  for(let i = 0; i < sonarFloorHistory.length; i++){
+    const x = (i / (sonarFloorHistory.length - 1)) * 125;
+    const depthVal = sonarFloorHistory[i];
+    const y = Math.min(90, 20 + (depthVal / 60) * 65);
+    if(i === 0) sCtx.moveTo(x, y); else sCtx.lineTo(x, y);
+  }
+  sCtx.stroke();
+
+  for(let i = sonarFishArcs.length - 1; i >= 0; i--){
+    const arc = sonarFishArcs[i];
+    arc.x -= 30 * 0.016;
+    if(arc.x < 0){
+      sonarFishArcs.splice(i, 1);
+      continue;
+    }
+    const arcY = 20 + arc.depthRatio * 55;
+    sCtx.strokeStyle = '#ffcc00';
+    sCtx.lineWidth = 2;
+    sCtx.beginPath();
+    sCtx.arc(arc.x, arcY, 6, Math.PI * 1.2, Math.PI * 1.8);
+    sCtx.stroke();
+  }
+
+  const curDepth = getExactDepthAt(boat.x, boat.y).toFixed(1);
+  sCtx.fillStyle = '#00ffcc';
+  sCtx.font = '900 10px monospace';
+  sCtx.fillText(`${curDepth}FT`, 82, 14);
+}
+
+function render(){
+  const tc = getTimeColors();
+
+  if(state.phase === 'casting' || state.phase === 'waiting' || state.phase === 'fighting'){
+    renderUnderwaterScene(tc);
+    return;
+  }
+
+  ctx.fillStyle = tc.water[1];
+  ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+  ctx.save();
+  ctx.translate(VIEW_W/2, VIEW_H*0.75);
+  ctx.scale(cameraZoom, cameraZoom);
+  ctx.translate(-boat.x, -boat.y);
+
+  ctx.fillStyle = tc.sky[0];
+  ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+  ctx.beginPath();
+  ctx.moveTo(lakePts[0].x, lakePts[0].y);
+  for(let i=1; i<lakePts.length; i++) ctx.lineTo(lakePts[i].x, lakePts[i].y);
+  ctx.closePath();
+
+  const waterGrad = ctx.createLinearGradient(0, 0, WORLD_W, WORLD_H);
+  waterGrad.addColorStop(0, tc.water[0]);
+  waterGrad.addColorStop(1, tc.water[1]);
+  ctx.fillStyle = waterGrad;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  hotspots.forEach(h => {
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, h.r, 0, Math.PI*2);
+    ctx.fillStyle = h.type === 'weed' ? 'rgba(40,180,90,0.18)' : h.type === 'rock' ? 'rgba(180,140,60,0.18)' : 'rgba(20,90,160,0.25)';
+    ctx.fill();
+  });
+
+  ctx.save();
+  ctx.translate(boat.x, boat.y);
+  ctx.rotate(boat.heading + Math.PI/2);
+  ctx.fillStyle = '#d6e6f2';
+  ctx.beginPath();
+  ctx.moveTo(0, -22); ctx.lineTo(11, 16); ctx.lineTo(-11, 16);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(-7, -4, 14, 16);
+  ctx.restore();
 
   if(state.phase === 'aiming' && state.aim.active){
-    ctx.strokeStyle = '#ffca28'; ctx.setLineDash([6, 6]); ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(VIEW_W / 2, VIEW_H * 0.85); ctx.lineTo(state.aim.x, state.aim.y); ctx.stroke();
-    ctx.setLineDash([]);
+    const screenDx = state.aim.x - VIEW_W/2, screenDy = (VIEW_H*0.75) - state.aim.y;
+    if(screenDy > 20){
+      const dist = Math.min(280, screenDy * (1.5 / cameraZoom));
+      const angleOffset = (screenDx / (VIEW_W * 0.5)) * (0.8 / cameraZoom);
+      const castAngle = boat.heading + angleOffset;
+      const tx = boat.x + Math.cos(castAngle) * dist;
+      const ty = boat.y + Math.sin(castAngle) * dist;
+
+      ctx.strokeStyle = '#00ffcc';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath(); ctx.moveTo(boat.x, boat.y); ctx.lineTo(tx, ty); ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.beginPath(); ctx.arc(tx, ty, 12, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(0,255,204,0.3)'; ctx.fill();
+      ctx.strokeStyle = '#00ffcc'; ctx.stroke();
+    }
   }
 
-  ctx.fillStyle = '#0a1014';
-  ctx.beginPath(); ctx.moveTo(VIEW_W * 0.1, VIEW_H); ctx.lineTo(VIEW_W * 0.5, VIEW_H * 0.78); ctx.lineTo(VIEW_W * 0.9, VIEW_H); ctx.fill();
+  ctx.restore();
 }
 
-function drawUnderwaterScreen(dt){
-  ctx.clearRect(0, 0, VIEW_W, VIEW_H);
-  const theme = getTimeColors();
+function renderUnderwaterScene(tc){
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, VIEW_H * 0.22);
+  skyGrad.addColorStop(0, tc.sky[0]); skyGrad.addColorStop(1, tc.sky[2] || tc.sky[1]);
+  ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, VIEW_W, VIEW_H * 0.22);
 
-  const bgGrad = ctx.createLinearGradient(0, 0, 0, VIEW_H);
-  bgGrad.addColorStop(0, theme.water[0]);
-  bgGrad.addColorStop(0.6, theme.water[1]);
-  bgGrad.addColorStop(1, '#010608');
-  ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  const waterGrad = ctx.createLinearGradient(0, VIEW_H * 0.22, 0, VIEW_H);
+  waterGrad.addColorStop(0, tc.water[0]); waterGrad.addColorStop(1, tc.water[1]);
+  ctx.fillStyle = waterGrad; ctx.fillRect(0, VIEW_H * 0.22, VIEW_W, VIEW_H * 0.78);
 
-  ctx.fillStyle = `rgba(255,255,255,${0.06 * theme.light})`;
-  for(let i=0; i<6; i++){
-    ctx.beginPath();
-    ctx.moveTo(VIEW_W*0.05 + i*150, 0);
-    ctx.lineTo(VIEW_W*0.18 + i*150, 0);
-    ctx.lineTo(VIEW_W*0.32 + i*160, VIEW_H);
-    ctx.lineTo(VIEW_W*0.12 + i*160, VIEW_H);
-    ctx.fill();
-  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(0, VIEW_H * 0.22); ctx.lineTo(VIEW_W, VIEW_H * 0.22); ctx.stroke();
 
-  ctx.fillStyle = 'rgba(255,255,255,0.3)';
-  for(const b of underwaterBubbles){
-    b.y -= b.s * dt;
-    if(b.y < 0) b.y = VIEW_H;
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  underwaterBubbles.forEach(b => {
+    b.y -= b.s * 0.016;
+    if(b.y < VIEW_H * 0.22) b.y = VIEW_H;
     ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
-  }
+  });
 
-  ctx.fillStyle = '#081210';
-  ctx.beginPath();
-  ctx.moveTo(0, VIEW_H * 0.80);
-  ctx.quadraticCurveTo(VIEW_W*0.35, VIEW_H*0.72, VIEW_W*0.7, VIEW_H*0.84);
-  ctx.quadraticCurveTo(VIEW_W*0.88, VIEW_H*0.88, VIEW_W, VIEW_H*0.82);
-  ctx.lineTo(VIEW_W, VIEW_H); ctx.lineTo(0, VIEW_H); ctx.fill();
+  const curTackle = $('tackleSelect').value;
+  const lure = state.retrievingLure;
 
-  if(state.phase === 'casting' || state.phase === 'waiting'){
-    const lure = state.retrievingLure;
-    
-    ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(VIEW_W * 0.05, 0); ctx.lineTo(lure.x, lure.y); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(VIEW_W * 0.1, VIEW_H * 0.2); ctx.lineTo(lure.x, lure.y); ctx.stroke();
 
-    ctx.fillStyle = '#ffca28';
-    ctx.beginPath(); ctx.arc(lure.x, lure.y, 6, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = (curTackle === 'spoon' || curTackle === 'spinner') ? '#e0e0e0' : (curTackle === 'jig') ? '#00ffcc' : '#ff9900';
+  ctx.beginPath(); ctx.arc(lure.x, lure.y, 6, 0, Math.PI*2); ctx.fill();
 
-    for(const f of state.ambientFish){
-      ctx.save();
-      ctx.translate(f.x, f.y);
-      const angle = Math.atan2(lure.y - f.y, lure.x - f.x);
-      ctx.rotate(f.state === 'idle' ? (f.vx > 0 ? 0 : Math.PI) : angle);
-      
-      const meta = speciesMeta[f.species] || speciesMeta.bass;
-      const img = speciesImages[meta.svg] || speciesImages.bass;
-      if(img && img.complete) ctx.drawImage(img, -45, -22, 90, 45);
-      ctx.restore();
-    }
-  } else if(state.phase === 'fighting'){
-    const fishPos = state.underwaterFishPos;
-    const meta = speciesMeta[state.fish] || speciesMeta.bass;
-    const img = speciesImages[meta.svg] || speciesImages.bass;
-
-    const mouthOffsetX = -45 * Math.cos(fishPos.angle);
-    const mouthOffsetY = -45 * Math.sin(fishPos.angle);
-    const lineTargetX = fishPos.x + mouthOffsetX;
-    const lineTargetY = fishPos.y + mouthOffsetY;
-
-    ctx.strokeStyle = state.tension > 0.8 ? '#ff3366' : 'rgba(255,255,255,0.85)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(0, VIEW_H * 0.1);
-    ctx.lineTo(lineTargetX, lineTargetY);
-    ctx.stroke();
-
+  for(const f of state.ambientFish){
+    const img = speciesImages[f.species] || speciesImages.bass;
     ctx.save();
-    ctx.translate(fishPos.x, fishPos.y);
-    ctx.rotate(fishPos.angle);
-    ctx.scale(0.85, 0.85);
-
-    if(img && img.complete) ctx.drawImage(img, -55, -28, 110, 56);
-
-    ctx.strokeStyle = '#c0c0c0'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(-42, 0, 5, 0, Math.PI); ctx.stroke();
+    ctx.translate(f.x, f.y);
+    if(f.vx < 0) ctx.scale(-1, 1);
+    if(img && img.complete) ctx.drawImage(img, -35, -18, 70, 36);
     ctx.restore();
   }
 }
 
-function drawSonar(){
-  const sCanvas = $('sonarCanvas'), sCtx = sCanvas.getContext('2d');
-  const w = sCanvas.width, h = sCanvas.height;
-  
-  sCtx.fillStyle = '#020b08'; sCtx.fillRect(0, 0, w, h);
-
-  sCtx.strokeStyle = 'rgba(0, 255, 170, 0.15)';
-  sCtx.lineWidth = 1;
-  for(let y=18; y<h; y+=18){
-    sCtx.beginPath(); sCtx.moveTo(0, y); sCtx.lineTo(w, y); sCtx.stroke();
-  }
-
-  sCtx.fillStyle = '#2d5e38';
-  sCtx.strokeStyle = '#00ffaa';
-  sCtx.lineWidth = 2;
-  sCtx.beginPath();
-  sCtx.moveTo(0, h);
-  for(let i=0; i<sonarFloorHistory.length; i++){
-    const x = (i / (sonarFloorHistory.length - 1)) * w;
-    const y = sonarFloorHistory[i];
-    sCtx.lineTo(x, y);
-  }
-  sCtx.lineTo(w, h);
-  sCtx.fill(); sCtx.stroke();
-
-  for(const arc of sonarFishArcs){
-    sCtx.strokeStyle = `rgba(255, 202, 40, ${arc.life})`;
-    sCtx.lineWidth = 2;
-    sCtx.beginPath();
-    sCtx.arc(arc.x, arc.y, 4, Math.PI * 1.15, Math.PI * 1.85);
-    sCtx.stroke();
-  }
-}
-
 function renderFullMap(){
-  const mCanvas = $('fullMapCanvas'), mCtx = mCanvas.getContext('2d');
-  const w = mCanvas.width, h = mCanvas.height;
-  mCtx.fillStyle = '#020d12'; mCtx.fillRect(0, 0, w, h);
+  const mCanvas = $('fullMapCanvas');
+  const mCtx = mCanvas.getContext('2d');
+  const mw = mCanvas.width, mh = mCanvas.height;
 
-  const sx = w / WORLD_W, sy = h / WORLD_H;
+  mCtx.fillStyle = '#04121a'; mCtx.fillRect(0, 0, mw, mh);
 
-  mCtx.fillStyle = '#083c48';
+  const scaleX = mw / WORLD_W, scaleY = mh / WORLD_H;
+
   mCtx.beginPath();
-  mCtx.moveTo(lakePts[0].x * sx, lakePts[0].y * sy);
-  for(let i=1; i<lakePts.length; i++) mCtx.lineTo(lakePts[i].x * sx, lakePts[i].y * sy);
-  mCtx.fill();
+  mCtx.moveTo(lakePts[0].x * scaleX, lakePts[0].y * scaleY);
+  for(let i=1; i<lakePts.length; i++) mCtx.lineTo(lakePts[i].x * scaleX, lakePts[i].y * scaleY);
+  mCtx.closePath();
+  mCtx.fillStyle = '#0a3244'; mCtx.fill();
+  mCtx.strokeStyle = '#00ffcc'; mCtx.lineWidth = 2; mCtx.stroke();
 
-  for(const hs of hotspots){
-    mCtx.fillStyle = hs.type === 'weed' ? 'rgba(46,125,50,0.5)' : hs.type === 'rock' ? 'rgba(120,144,156,0.5)' : 'rgba(2,119,189,0.5)';
+  hotspots.forEach(h => {
     mCtx.beginPath();
-    mCtx.arc(hs.x * sx, hs.y * sy, hs.r * sx, 0, Math.PI * 2);
-    mCtx.fill();
-    mCtx.fillStyle = '#fff';
-    mCtx.font = '10px sans-serif';
-    mCtx.fillText(hs.name, (hs.x - 28) * sx, hs.y * sy);
-  }
+    mCtx.arc(h.x * scaleX, h.y * scaleY, h.r * scaleX, 0, Math.PI*2);
+    mCtx.fillStyle = 'rgba(255,202,40,0.25)'; mCtx.fill();
+  });
 
-  mCtx.fillStyle = '#ff4d6d';
+  mCtx.fillStyle = '#ff3366';
   mCtx.beginPath();
-  mCtx.arc(boat.x * sx, boat.y * sy, 6, 0, Math.PI * 2);
+  mCtx.arc(boat.x * scaleX, boat.y * scaleY, 6, 0, Math.PI*2);
   mCtx.fill();
 }
 
 fitCanvas();
-renderRecords();
-setPhase('driving');
-requestAnimationFrame(loop);
+requestAnimationFrame(gameLoop);
 </script>
 </body>
 </html>
