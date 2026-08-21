@@ -127,7 +127,7 @@ option{background:#12212b;color:#fff}
           <div class="message" id="waitMsg" style="background:rgba(8,24,32,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:8px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.18);box-shadow:0 6px 20px rgba(0,0,0,.4)"></div>
         </div>
         <div class="actionGroup">
-          <button class="mainBtn reel" id="retrieveBtn">REEL IN</button>
+          <button class="mainBtn reel" id="retrieveBtn">HOLD TO REEL</button>
         </div>
       </div>
 
@@ -240,7 +240,7 @@ const fishSVGs = {
 const speciesImages = {};
 Object.keys(fishSVGs).forEach(key => {
   const img = new Image();
-  img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(fishSVGs[key]);
+  img.src = 'data:image/svg+xml;utf8,+encodeURIComponent(fishSVGs[key]);
   speciesImages[key] = img;
 });
 
@@ -288,7 +288,7 @@ const state = {
   timeMinutes: 5 * 60,
   clockSpeedMultiplier: 1,
   underwaterFishPos: { x: 0, y: 0, vx: 0, vy: 0, angle: 0 },
-  retrievingLure: { x: 800, y: 150, reelSpeed: 0, isAutoReeling: false },
+  retrievingLure: { x: 800, y: 150, reelSpeed: 0, isReeling: false },
   ambientFish: [],
   transitionTimer: 0
 };
@@ -412,10 +412,7 @@ $('closeMapBtn').addEventListener('click', e => {
   $('fullMapModal').classList.add('hidden');
 });
 
-// Safeguard tackle selection changes so they never bug out game state
-$('tackleSelect').addEventListener('change', () => {
-  // Safe handler update confirmation if needed
-});
+$('tackleSelect').addEventListener('change', () => {});
 
 function switchLake(key){
   currentLakeKey = key;
@@ -491,14 +488,22 @@ function updateAim(e){
 $('castBtn').addEventListener('click', () => { if(state.phase === 'driving'){ state.aim.active = false; setPhase('aiming'); } });
 $('cancelAimBtn').addEventListener('click', () => { setPhase('driving'); });
 
-// Fixed Reel In action handlers for retrieval button bindings
-const triggerRetrieve = (e) => {
-  if(e) e.preventDefault();
-  state.retrievingLure.reelSpeed = 240;
-  state.retrievingLure.isAutoReeling = true;
+// Press-and-hold bindings for retrieving lure line
+const retrieveBtn = $('retrieveBtn');
+const startReeling = (e) => {
+  if (e) e.preventDefault();
+  state.retrievingLure.isReeling = true;
 };
-$('retrieveBtn').addEventListener('pointerdown', triggerRetrieve);
-$('retrieveBtn').addEventListener('click', triggerRetrieve);
+const stopReeling = (e) => {
+  if (e) e.preventDefault();
+  state.retrievingLure.isReeling = false;
+};
+
+retrieveBtn.addEventListener('pointerdown', startReeling);
+retrieveBtn.addEventListener('pointerup', stopReeling);
+retrieveBtn.addEventListener('pointercancel', stopReeling);
+retrieveBtn.addEventListener('touchstart', startReeling, {passive: false});
+retrieveBtn.addEventListener('touchend', stopReeling, {passive: false});
 
 $('reelBtn').addEventListener('click', reel);
 $('runBtn').addEventListener('click', runLine);
@@ -544,21 +549,21 @@ function launchCast(){
     x: VIEW_W * 0.88,
     y: VIEW_H * 0.3,
     reelSpeed: 0,
-    isAutoReeling: false
+    isReeling: false
   };
 
   setPhase('casting');
-  $('waitMsg').textContent = 'Line cast! Tap REEL IN to retrieve line.';
+  $('waitMsg').textContent = 'Line cast! Press and hold HOLD TO REEL.';
 }
 
 function processUnderwaterRetrieval(dt){
   const lure = state.retrievingLure;
   const currentTackle = $('tackleSelect').value;
   
-  if(lure.isAutoReeling){
-    lure.reelSpeed = Math.max(80, lure.reelSpeed - 120 * dt);
+  if(lure.isReeling){
+    lure.reelSpeed = Math.min(220, lure.reelSpeed + 350 * dt);
   } else {
-    lure.reelSpeed = Math.max(0, lure.reelSpeed - 160 * dt);
+    lure.reelSpeed = Math.max(0, lure.reelSpeed - 300 * dt);
   }
 
   lure.x -= lure.reelSpeed * dt;
