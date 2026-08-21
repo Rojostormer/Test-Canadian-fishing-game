@@ -44,11 +44,11 @@ h1{font-size:20px;margin:0;font-weight:900;letter-spacing:.6px;background:linear
 
 /* buttons */
 .actionGroup{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px}
-.mainBtn{width:96px;height:46px;border-radius:14px;background:linear-gradient(135deg,#ff7b00,#e65100);color:#fff;font-weight:900;font-size:13px;border:1px solid rgba(255,255,255,.4);box-shadow:0 6px 18px rgba(230,81,0,.4);letter-spacing:.4px}
+.mainBtn{width:96px;height:46px;border-radius:14px;background:linear-gradient(135deg,#ff7b00,#e65100);color:#fff;font-weight:900;font-size:13px;border:1px solid rgba(255,255,255,.4);box-shadow:0 6px 18px rgba(230,81,0,.4);letter-spacing:.4px;cursor:pointer}
 .mainBtn.reel{background:linear-gradient(135deg,#00b4d8,#0077b6);box-shadow:0 6px 18px rgba(0,119,182,.4)}
 .mainBtn:disabled{opacity:.35}
 .aimHint{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(8,24,32,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:8px 18px;border-radius:99px;font-size:12px;font-weight:800;text-align:center;white-space:nowrap;border:1px solid rgba(255,255,255,.2);box-shadow:0 6px 20px rgba(0,0,0,.4)}
-.cancelAim{position:absolute;right:14px;bottom:14px;width:76px;height:46px;border-radius:14px;background:linear-gradient(135deg,#e63946,#d62828);color:#fff;font-weight:900;font-size:11px;border:1px solid rgba(255,255,255,.3);box-shadow:0 6px 18px rgba(214,40,40,.4)}
+.cancelAim{position:absolute;right:14px;bottom:14px;width:76px;height:46px;border-radius:14px;background:linear-gradient(135deg,#e63946,#d62828);color:#fff;font-weight:900;font-size:11px;border:1px solid rgba(255,255,255,.3);box-shadow:0 6px 18px rgba(214,40,40,.4);cursor:pointer}
 
 /* fight controls */
 .fightWrap{position:absolute;left:0;right:0;bottom:0;padding:14px;background:linear-gradient(transparent,rgba(3,12,16,.95) 45%)}
@@ -59,11 +59,11 @@ h1{font-size:20px;margin:0;font-weight:900;letter-spacing:.6px;background:linear
 .fill{height:100%;width:20%;background:linear-gradient(90deg,#4cc9f0,#4895ef);transition:width .12s}
 .fill.red{background:linear-gradient(90deg,#ff4d6d,#c9184a)}
 .fightBtns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.fightBtns button{min-height:54px;border:0;border-radius:14px;font-weight:900;font-size:14px;color:#fff;border:1px solid rgba(255,255,255,.2)}
+.fightBtns button{min-height:54px;border:0;border-radius:14px;font-weight:900;font-size:14px;color:#fff;border:1px solid rgba(255,255,255,.2);cursor:pointer}
 #reelBtn{background:linear-gradient(135deg,#00b4d8,#0077b6);box-shadow:0 6px 18px rgba(0,119,182,.4)}
 #runBtn{background:linear-gradient(135deg,#2a9d8f,#264653);box-shadow:0 6px 18px rgba(38,70,83,.4)}
 .hookPrompt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:rgba(2,10,14,.4);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-.hookPrompt button{min-height:64px;min-width:180px;border:0;border-radius:99px;background:linear-gradient(135deg,#ffca28,#f57c00);color:#120a00;font-weight:900;font-size:17px;letter-spacing:.5px;box-shadow:0 8px 24px rgba(245,124,0,.5);border:2px solid rgba(255,255,255,.4)}
+.hookPrompt button{min-height:64px;min-width:180px;border:0;border-radius:99px;background:linear-gradient(135deg,#ffca28,#f57c00);color:#120a00;font-weight:900;font-size:17px;letter-spacing:.5px;box-shadow:0 8px 24px rgba(245,124,0,.5);border:2px solid rgba(255,255,255,.4);cursor:pointer}
 .strikeTimer{width:180px;height:8px;border-radius:99px;background:rgba(255,255,255,.2);overflow:hidden;border:1px solid rgba(255,255,255,.2)}
 .strikeTimer i{display:block;height:100%;background:#ffca28;width:100%}
 
@@ -71,7 +71,7 @@ h1{font-size:20px;margin:0;font-weight:900;letter-spacing:.6px;background:linear
 
 /* lower panel controls */
 .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-button,select{width:100%;min-height:48px;border:0;border-radius:14px;font-size:14px;font-weight:900;color:#fff;background:linear-gradient(135deg,#00b4d8,#0077b6);border:1px solid rgba(255,255,255,.18)}
+button,select{width:100%;min-height:48px;border:0;border-radius:14px;font-size:14px;font-weight:900;color:#fff;background:linear-gradient(135deg,#00b4d8,#0077b6);border:1px solid rgba(255,255,255,.18);cursor:pointer}
 button.secondary{background:linear-gradient(135deg,#2b3a42,#1a252c)}
 select{padding:0 12px;background:#1a252c;border:1px solid rgba(255,255,255,.15)}
 .row{display:flex;gap:10px;align-items:center}
@@ -82,7 +82,7 @@ select{padding:0 12px;background:#1a252c;border:1px solid rgba(255,255,255,.15)}
 .hidden{display:none!important}
 .result{text-align:center}
 .fishImgContainer{height:120px;display:flex;align-items:center;justify-content:center;margin:10px 0}
-.fishImgContainer img{max-height:100%;max-width:80%;object-fit:contain;filter:drop-shadow(0 8px 16px rgba(0,0,0,.6))}
+.fishImgContainer svg{max-height:100%;max-width:80%;filter:drop-shadow(0 8px 16px rgba(0,0,0,.6))}
 .small{font-size:11px;color:#7a9cb0;line-height:1.4}
 </style>
 </head>
@@ -181,9 +181,7 @@ select{padding:0 12px;background:#1a252c;border:1px solid rgba(255,255,255,.15)}
 </section>
 
 <section id="result" class="card result hidden">
-  <div class="fishImgContainer">
-    <img id="fishRender" src="" alt="Caught Fish">
-  </div>
+  <div class="fishImgContainer" id="fishSvgContainer"></div>
   <h2 id="fishName" style="margin:4px 0;font-weight:900">Fish</h2>
   <div id="fishStats"></div>
   <div style="height:14px"></div>
@@ -204,15 +202,12 @@ select{padding:0 12px;background:#1a252c;border:1px solid rgba(255,255,255,.15)}
 <script>
 const $=id=>document.getElementById(id);
 
-/* ---------- High-Res Transparent Fish Image Preloading ---------- */
-const fishImages = {
-  bass: new Image(),
-  pike: new Image(),
-  walleye: new Image()
+/* ---------- Inline SVG Graphic Renders (CORS-Safe) ---------- */
+const fishSVGs = {
+  bass: `<svg viewBox="0 0 200 100" width="100%" height="100%"><path d="M20,50 Q40,10 90,15 Q140,20 180,50 Q140,80 90,85 Q40,90 20,50 Z" fill="#4d6e38" stroke="#2d4220" stroke-width="3"/><path d="M180,50 L195,30 L190,50 L195,70 Z" fill="#3a522a"/><circle cx="45" cy="35" r="5" fill="#f5ad42"/><circle cx="46" cy="35" r="2" fill="#000"/><path d="M30,60 Q50,65 70,55" stroke="#1c2b14" stroke-width="3" fill="none"/></svg>`,
+  pike: `<svg viewBox="0 0 220 80" width="100%" height="100%"><path d="M10,40 Q50,15 110,20 Q170,25 210,40 Q170,55 110,60 Q50,65 10,40 Z" fill="#2d503d" stroke="#16291f" stroke-width="3"/><path d="M210,40 L220,20 L215,40 L220,60 Z" fill="#1d3629"/><circle cx="30" cy="32" r="4" fill="#f5cd42"/><circle cx="31" cy="32" r="2" fill="#000"/><ellipse cx="100" cy="40" rx="60" ry="8" fill="#528268" opacity="0.4"/></svg>`,
+  walleye: `<svg viewBox="0 0 200 90" width="100%" height="100%"><path d="M15,45 Q45,10 95,15 Q145,20 185,45 Q145,75 95,80 Q45,80 15,45 Z" fill="#8c7038" stroke="#52401f" stroke-width="3"/><path d="M185,45 L198,25 L192,45 L198,65 Z" fill="#52401f"/><circle cx="40" cy="30" r="5" fill="#ffffff"/><circle cx="40" cy="30" r="3" fill="#88c5cc"/><path d="M70,18 L90,2 L110,17 Z" fill="#6e572a"/></svg>`
 };
-fishImages.bass.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Smallmouth_bass.png/640px-Smallmouth_bass.png";
-fishImages.pike.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Northern_pike.png/640px-Northern_pike.png";
-fishImages.walleye.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Sander_vitreus.png/640px-Sander_vitreus.png";
 
 /* ---------- world setup ---------- */
 const WORLD_W=2200, WORLD_H=1600;
@@ -326,7 +321,7 @@ const state={
   fish:null,weight:0,length:0,
   tension:.2,stamina:1,
   lurePos:null, castFrom:null, castT:0,
-  fishSwimPhase:0, fishJumpT:0,
+  fishSwimPhase:0,
   aim:{active:false,x:0,y:0},
   strikeDeadline:0,
   timeMinutes:6*60+40
@@ -532,7 +527,7 @@ function land(){
   state[state.fish]=Math.max(state[state.fish],state.weight);
   const meta=speciesMeta[state.fish];
   
-  $('fishRender').src = fishImages[state.fish].src;
+  $('fishSvgContainer').innerHTML = fishSVGs[state.fish];
   $('fishName').textContent=meta.label;
   $('fishStats').innerHTML=`<strong>${state.weight.toFixed(2)} lb</strong> • ${state.length} in<br><span class="small">+$${reward} credits • +${gain} XP</span>`;
   setPhase('landed');
@@ -616,11 +611,11 @@ function update(dt){
   if(hs) $('spotFlag').textContent=hs.name;
 }
 
-/* ---------- rendering: High Details & Lighting ---------- */
+/* ---------- rendering ---------- */
 function drawFirstPerson(){
   ctx.clearRect(0,0,VIEW_W,VIEW_H);
 
-  // 1. Sky Gradient & Volumetric Sun Shafts
+  // 1. Sky Gradient
   const skyGrad = ctx.createLinearGradient(0, 0, 0, VIEW_H * 0.45);
   skyGrad.addColorStop(0, '#04151f');
   skyGrad.addColorStop(0.5, '#113243');
@@ -628,16 +623,7 @@ function drawFirstPerson(){
   ctx.fillStyle = skyGrad;
   ctx.fillRect(0, 0, VIEW_W, VIEW_H * 0.45);
 
-  // Volumetric Sun Rays
-  ctx.save();
-  const rayGrad = ctx.createRadialGradient(VIEW_W*0.5, 0, 10, VIEW_W*0.5, 0, VIEW_H*0.6);
-  rayGrad.addColorStop(0, 'rgba(255, 235, 170, 0.25)');
-  rayGrad.addColorStop(1, 'rgba(255, 235, 170, 0)');
-  ctx.fillStyle = rayGrad;
-  ctx.fillRect(0, 0, VIEW_W, VIEW_H * 0.45);
-  ctx.restore();
-
-  // 2. Realistic Water Perspective
+  // 2. Perspective Water Gradient
   const horizonY = VIEW_H * 0.42;
   const waterGrad = ctx.createLinearGradient(0, horizonY, 0, VIEW_H);
   waterGrad.addColorStop(0, '#12414d');
@@ -646,14 +632,14 @@ function drawFirstPerson(){
   ctx.fillStyle = waterGrad;
   ctx.fillRect(0, horizonY, VIEW_W, VIEW_H - horizonY);
 
-  // Dynamic Horizon Fog Blend
+  // Horizon Fog
   const fogGrad = ctx.createLinearGradient(0, horizonY - 15, 0, horizonY + 25);
   fogGrad.addColorStop(0, 'rgba(44, 93, 115, 0.8)');
   fogGrad.addColorStop(1, 'rgba(18, 65, 77, 0)');
   ctx.fillStyle = fogGrad;
   ctx.fillRect(0, horizonY - 15, VIEW_W, 40);
 
-  // Procedural Water Waves with Highlights
+  // Water Ripples
   ctx.save();
   const rippleTime = performance.now() * 0.0015;
   for (let y = horizonY + 4; y < VIEW_H; y += 6) {
@@ -669,7 +655,7 @@ function drawFirstPerson(){
   }
   ctx.restore();
 
-  // 3. Shoreline & Trees Raycasting
+  // 3. Shoreline Raycasting
   ctx.save();
   const fov = 1.1 / cameraZoom;
   const numRays = 140;
@@ -692,14 +678,13 @@ function drawFirstPerson(){
       const xPos = (i / numRays) * VIEW_W;
       const colWidth = (VIEW_W / numRays) + 1;
       
-      // Layered forest depth
       ctx.fillStyle = dist < 220 ? '#1b402e' : (dist < 400 ? '#122e21' : '#0c1f16');
       ctx.fillRect(xPos, horizonY - wallHeight * 0.82, colWidth, wallHeight * 0.84);
     }
   }
   ctx.restore();
 
-  // 4. Lure & Fishing Line Projection
+  // 4. Lure & Fishing Line
   const rodOrigin = {x: VIEW_W * 0.72, y: VIEW_H * 0.85};
 
   if(state.lurePos && (state.phase==='casting'||state.phase==='waiting'||state.phase==='strike'||state.phase==='fighting')){
@@ -719,7 +704,7 @@ function drawFirstPerson(){
       currentLureY -= arc;
     }
 
-    // High Visibility Monofilament Line
+    // Line
     ctx.strokeStyle = 'rgba(255,255,255,0.85)';
     ctx.lineWidth = 1.2;
     ctx.beginPath();
@@ -727,7 +712,7 @@ function drawFirstPerson(){
     ctx.quadraticCurveTo((rodOrigin.x + screenX)/2, Math.min(rodOrigin.y, currentLureY) - 20, screenX, currentLureY);
     ctx.stroke();
 
-    // Lure Splash / Render
+    // Lure Splash
     ctx.fillStyle = '#ffca28';
     ctx.beginPath(); ctx.arc(screenX, currentLureY, 4, 0, Math.PI*2); ctx.fill();
 
@@ -735,17 +720,6 @@ function drawFirstPerson(){
       const pulse = (Math.sin(performance.now()/200)+1)*5;
       ctx.strokeStyle = 'rgba(255,255,255,0.6)';
       ctx.beginPath(); ctx.arc(screenX, currentLureY, 6 + pulse, 0, Math.PI*2); ctx.stroke();
-    } else if(state.phase==='fighting'){
-      // Fish Render on Hook
-      const img = fishImages[state.fish];
-      if(img.complete){
-        ctx.save();
-        const swimJitter = Math.sin(state.fishSwimPhase) * 12;
-        const fishSize = 70;
-        ctx.translate(screenX + swimJitter, currentLureY + 10);
-        ctx.drawImage(img, -fishSize/2, -fishSize/4, fishSize, fishSize/2);
-        ctx.restore();
-      }
     }
   }
 
@@ -763,7 +737,7 @@ function drawFirstPerson(){
     ctx.beginPath(); ctx.arc(state.aim.x, state.aim.y, 6, 0, Math.PI*2); ctx.fill();
   }
 
-  // 6. Cockpit & Graphite Fishing Rod Overlay
+  // 6. Boat Deck & Rod Overlay
   drawCockpit(rodOrigin);
 }
 
@@ -787,7 +761,7 @@ function drawCockpit(rodTip){
   ctx.lineWidth = 3;
   ctx.stroke();
 
-  // Carbon Fiber Fishing Rod
+  // Fishing Rod
   const rodGrad = ctx.createLinearGradient(VIEW_W * 0.88, VIEW_H, rodTip.x, rodTip.y);
   rodGrad.addColorStop(0, '#111');
   rodGrad.addColorStop(0.5, '#333');
@@ -799,14 +773,13 @@ function drawCockpit(rodTip){
   ctx.lineTo(rodTip.x, rodTip.y);
   ctx.stroke();
 
-  // Metallic Line Guide
   ctx.fillStyle = '#4cc9f0';
   ctx.beginPath(); ctx.arc(rodTip.x, rodTip.y, 4, 0, Math.PI*2); ctx.fill();
 
   ctx.restore();
 }
 
-/* ---------- Dashboard Display 1: Sonar / Fish Finder ---------- */
+/* ---------- Dashboard Display 1: Sonar ---------- */
 function drawSonar(){
   const sCanvas = $('sonarCanvas');
   const sCtx = sCanvas.getContext('2d');
@@ -815,18 +788,14 @@ function drawSonar(){
   sCtx.fillStyle = '#010f0a';
   sCtx.fillRect(0,0,w,h);
 
-  // Sonar Grid lines
   sCtx.strokeStyle = 'rgba(0,255,170,0.12)';
   sCtx.lineWidth = 1;
   for(let y=15;y<h;y+=15){
     sCtx.beginPath(); sCtx.moveTo(0,y); sCtx.lineTo(w,y); sCtx.stroke();
   }
 
-  // Sonar Depth Line
   sCtx.strokeStyle = '#00ffaa';
   sCtx.lineWidth = 2;
-  sCtx.shadowColor = '#00ffaa';
-  sCtx.shadowBlur = 4;
   sCtx.beginPath();
   for(let i=0; i<sonarHistory.length; i++){
     const x = (i / sonarHistory.length) * w;
@@ -834,20 +803,9 @@ function drawSonar(){
     if(i===0) sCtx.moveTo(x,y); else sCtx.lineTo(x,y);
   }
   sCtx.stroke();
-  sCtx.shadowBlur = 0;
-
-  // Fish Arch Blips
-  if(hotspotNear(boat.x, boat.y) && Math.random()<0.6){
-    sCtx.strokeStyle = '#ffca28';
-    sCtx.lineWidth = 2;
-    sCtx.beginPath();
-    const fx = w * 0.7, fy = h * 0.4 + Math.sin(performance.now()*0.005)*8;
-    sCtx.arc(fx, fy, 6, Math.PI*1.2, Math.PI*1.8);
-    sCtx.stroke();
-  }
 }
 
-/* ---------- Dashboard Display 2: Live Overview Map ---------- */
+/* ---------- Dashboard Display 2: Overview Map ---------- */
 function drawOverviewMap(){
   const mCanvas = $('mapCanvas');
   const mCtx = mCanvas.getContext('2d');
@@ -859,7 +817,6 @@ function drawOverviewMap(){
   const scaleX = w / WORLD_W;
   const scaleY = h / WORLD_H;
 
-  // Lake Silhouette
   mCtx.fillStyle = '#083c48';
   mCtx.beginPath();
   mCtx.moveTo(lakePts[0].x * scaleX, lakePts[0].y * scaleY);
@@ -869,7 +826,6 @@ function drawOverviewMap(){
   mCtx.closePath();
   mCtx.fill();
 
-  // Hotspots
   hotspots.forEach(hs=>{
     mCtx.fillStyle = 'rgba(255, 202, 40, 0.35)';
     mCtx.beginPath();
@@ -877,7 +833,6 @@ function drawOverviewMap(){
     mCtx.fill();
   });
 
-  // Boat Position & Heading Arrow
   const bx = boat.x * scaleX;
   const by = boat.y * scaleY;
 
@@ -886,8 +841,6 @@ function drawOverviewMap(){
   mCtx.rotate(boat.heading);
 
   mCtx.fillStyle = '#ff4d6d';
-  mCtx.shadowColor = '#ff4d6d';
-  mCtx.shadowBlur = 6;
   mCtx.beginPath();
   mCtx.moveTo(7, 0);
   mCtx.lineTo(-4, -4);
