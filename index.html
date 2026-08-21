@@ -1,49 +1,463 @@
-# 🎣 Lake Erie Trophy Angler
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Lake Erie Trophy Angler</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Courier New', Courier, monospace;
+        }
 
-A retro, arcade-style 3D fishing simulator inspired by early-2000s classics like **Rapala Pro Fishing** and **Bass Masters**. Built as a lightweight, single-file HTML5 web application with zero external dependencies.
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
 
----
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
 
-## 🌟 Key Features
+        /* --- REALISTIC LCD FISH FINDER HUD --- */
+        #sonar-unit {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 220px;
+            background: #111;
+            border: 4px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,0,0,0.9);
+            padding: 8px;
+            color: #111;
+            z-index: 10;
+        }
 
-* **First-Person Boat Navigation:** Move across Lake Erie in a 3D cockpit perspective using responsive throttle and steering controls.
-* **Lake Erie Topographical GPS:** Real-time minimap rendering depth contours based on authentic Lake Erie structures, including shallow western basins and offshore shoals.
-* **Digital Sonar / Fish Finder:** Live scrolling LCD sonar unit tracking bottom topography and marking nearby fish arches in real-time.
-* **Underwater Reeling Battles:** Once a fish strikes, the camera cuts below the water surface into an active fight phase.
-* **Rapala-Style Tension Physics:** 
-  * Counter-steer your rod (`A`/`D`) against the fish's swimming direction.
-  * Manage line tension (`W` to reel, `S` to give slack) to prevent line snaps during surges.
-* **Tackle & Equipment Mechanics:** Select from various lures (Shad Raps, Skitter Walks, DT-10s) and baits (Emerald Shiners, Nightcrawlers) that directly impact fish attraction rates and target species.
+        #sonar-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
 
----
+        #sonar-screen-container {
+            position: relative;
+            width: 100%;
+            height: 140px;
+            background-color: #829f82; /* Retro LCD Olive Background */
+            border: 2px solid #222;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
 
-## 🕹️ Controls
+        /* Scanline / Grid overlay */
+        #sonar-screen-container::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(0,0,0,0.05) 50%, rgba(255,255,255,0.05) 50%),
+                        linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+            background-size: 100% 4px, 20px 100%;
+            pointer-events: none;
+        }
 
-| Action | Keyboard | On-Screen Buttons |
-| :--- | :--- | :--- |
-| **Move Forward / Reel Line** | `W` or `Up Arrow` | `▲ FWD / REEL` |
-| **Reverse / Give Line Slack** | `S` or `Down Arrow` | `▼ REV / SLACK` |
-| **Steer Left / Angle Rod Left** | `A` or `Left Arrow` | `◀ STEER / ROD L` |
-| **Steer Right / Angle Rod Right** | `D` or `Right Arrow` | `STEER / ROD R ▶` |
-| **Cast / Hook / Main Action** | `Spacebar` / Click | `CAST LINE` / `SET HOOK` |
+        #sonar-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
 
----
+        #sonar-readouts {
+            position: absolute;
+            top: 4px;
+            left: 6px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #0f1c0f;
+            text-shadow: 1px 1px 0px rgba(255,255,255,0.2);
+            pointer-events: none;
+            font-size: 12px;
+            line-height: 1.2;
+        }
 
-## 🐟 Target Species & Tackle Strategy
+        #sonar-readouts span {
+            font-size: 18px;
+        }
 
-| Lure Type | Target Depth | Effective Species |
-| :--- | :--- | :--- |
-| **Skitter Walk** | Shallow (0 - 4 ft) | Topwater strikes |
-| **Husky Jerk** | Mid-depth (4 - 10 ft) | Smallmouth Bass, Yellow Perch |
-| **Shad Rap** | Deep (8 - 15 ft) | Walleye, Bass |
-| **DT-10** | Structure Deep (10 - 25 ft) | Deep Lake Trout, Monster Walleye |
+        /* --- TRANSLUCENT CONTROLS OVERLAY --- */
+        
+        /* Left: Virtual Joystick */
+        #joystick-container {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            width: 130px;
+            height: 130px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            backdrop-filter: blur(4px);
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
----
+        #joystick-stick {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.35);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            pointer-events: none;
+            transition: transform 0.05s ease-out;
+        }
 
-## 🚀 Quick Start / Installation
+        /* Right: Translucent Circular Action Buttons */
+        #controls-right {
+            position: absolute;
+            bottom: 60px;
+            right: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            z-index: 20;
+        }
 
-No build steps or package managers required.
+        .action-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: bold;
+            font-size: 13px;
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: background 0.1s, transform 0.05s;
+        }
 
-1. Clone or download the repository.
-2. Open `index.html` directly in any modern web browser (Chrome, Firefox, Edge, Safari).
-3. Click **CAST LINE** to begin your tournament!
+        .action-btn:active {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0.92);
+        }
+
+        .action-btn span {
+            font-size: 9px;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        /* Status UI Center Top */
+        #game-status {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            font-size: 18px;
+            font-weight: bold;
+            pointer-events: none;
+            text-align: center;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="renderCanvas"></canvas>
+
+    <!-- STATUS DISPLAY -->
+    <div id="game-status">NAVIGATION MODE</div>
+
+    <!-- LCD SONAR UNIT -->
+    <div id="sonar-unit">
+        <div id="sonar-header">
+            <span>ErieSonar 2000</span>
+            <span>200 kHz</span>
+        </div>
+        <div id="sonar-screen-container">
+            <canvas id="sonar-canvas" width="200" height="140"></canvas>
+            <div id="sonar-readouts">
+                DEPTH<br>
+                <span id="sonar-depth">24.5</span><small>FT</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEFT JOYSTICK -->
+    <div id="joystick-container">
+        <div id="joystick-stick"></div>
+    </div>
+
+    <!-- RIGHT ACTION BUTTONS -->
+    <div id="controls-right">
+        <!-- Tap to Reel Button -->
+        <button class="action-btn" id="btn-reel">
+            REEL
+            <span>(TAP)</span>
+        </button>
+        <!-- Cast / Hook Button -->
+        <button class="action-btn" id="btn-action">
+            CAST
+            <span>LINE</span>
+        </button>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('renderCanvas');
+    const ctx = canvas.getContext('2d');
+    const sonarCanvas = document.getElementById('sonar-canvas');
+    const sonarCtx = sonarCanvas.getContext('2d');
+    const statusEl = document.getElementById('game-status');
+    const depthEl = document.getElementById('sonar-depth');
+
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // --- GAME STATE ---
+    const STATE = { NAV: 0, CASTING: 1, WAITING: 2, REELING: 3 };
+    let currentState = STATE.NAV;
+
+    let boat = { x: 0, z: 0, angle: 0, speed: 0 };
+    let inputVector = { x: 0, y: 0 }; // Joystick values [-1, 1]
+    let depth = 24.5;
+    let lineTension = 0;
+    let fishDistance = 100;
+
+    // --- SONAR HISTORY BUFFERS ---
+    const sonarWidth = sonarCanvas.width;
+    const sonarHeight = sonarCanvas.height;
+    let depthHistory = new Array(sonarWidth).fill(80);
+    let fishArches = [];
+
+    // --- TRANSLUCENT JOYSTICK LOGIC ---
+    const joyContainer = document.getElementById('joystick-container');
+    const joyStick = document.getElementById('joystick-stick');
+    let joyActive = false;
+    let joyTouchId = null;
+    const joyRadius = 45;
+
+    function handleJoyMove(clientX, clientY) {
+        const rect = joyContainer.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        let dx = clientX - centerX;
+        let dy = clientY - centerY;
+        let dist = Math.hypot(dx, dy);
+
+        if (dist > joyRadius) {
+            dx = (dx / dist) * joyRadius;
+            dy = (dy / dist) * joyRadius;
+        }
+
+        joyStick.style.transform = `translate(${dx}px, ${dy}px)`;
+
+        // Normalize vector to [-1, 1]
+        inputVector.x = dx / joyRadius;
+        inputVector.y = dy / joyRadius;
+    }
+
+    function resetJoystick() {
+        joyActive = false;
+        joyTouchId = null;
+        joyStick.style.transform = `translate(0px, 0px)`;
+        inputVector.x = 0;
+        inputVector.y = 0;
+    }
+
+    joyContainer.addEventListener('pointerdown', (e) => {
+        joyActive = true;
+        joyTouchId = e.pointerId;
+        joyContainer.setPointerCapture(e.pointerId);
+        handleJoyMove(e.clientX, e.clientY);
+    });
+
+    joyContainer.addEventListener('pointermove', (e) => {
+        if (joyActive && e.pointerId === joyTouchId) {
+            handleJoyMove(e.clientX, e.clientY);
+        }
+    });
+
+    joyContainer.addEventListener('pointerup', resetJoystick);
+    joyContainer.addEventListener('pointercancel', resetJoystick);
+
+    // --- TAP TO REEL MECHANIC ---
+    const btnReel = document.getElementById('btn-reel');
+    const btnAction = document.getElementById('btn-action');
+
+    btnReel.addEventListener('click', () => {
+        if (currentState === STATE.REELING) {
+            // Each discrete tap pulls the fish closer and increases tension
+            fishDistance = Math.max(0, fishDistance - 4);
+            lineTension = Math.min(100, lineTension + 12);
+        }
+    });
+
+    btnAction.addEventListener('click', () => {
+        if (currentState === STATE.NAV) {
+            currentState = STATE.WAITING;
+            statusEl.innerText = "WAITING FOR STRIKE...";
+            btnAction.innerHTML = "HOOK<span>SET</span>";
+            setTimeout(() => {
+                if (currentState === STATE.WAITING) {
+                    currentState = STATE.REELING;
+                    statusEl.innerText = "FISH ON! TAP REEL!";
+                    fishDistance = 80;
+                }
+            }, 3000);
+        } else if (currentState === STATE.REELING && fishDistance <= 0) {
+            currentState = STATE.NAV;
+            statusEl.innerText = "WALLEYE CAUGHT! NAV MODE";
+            btnAction.innerHTML = "CAST<span>LINE</span>";
+        }
+    });
+
+    // --- LCD SONAR RENDERING ENGINE ---
+    function updateSonar() {
+        // Calculate simulated terrain depth
+        const simulatedDepth = 20 + Math.sin(boat.x * 0.05) * 8 + Math.cos(boat.z * 0.05) * 5;
+        depth = simulatedDepth;
+        depthEl.innerText = depth.toFixed(1);
+
+        // Scroll sonar data left
+        depthHistory.shift();
+        const bottomY = Math.min(sonarHeight - 10, (depth / 40) * sonarHeight);
+        depthHistory.push(bottomY);
+
+        // Move fish arches left
+        fishArches.forEach(f => f.x -= 1);
+        fishArches = fishArches.filter(f => f.x > -20);
+
+        // Spawn random fish arches
+        if (Math.random() < 0.04) {
+            fishArches.push({
+                x: sonarWidth + 10,
+                y: 30 + Math.random() * (bottomY - 40),
+                size: 6 + Math.random() * 8
+            });
+        }
+
+        // Draw LCD graphics
+        sonarCtx.fillStyle = '#829f82'; // Clear canvas with LCD olive base
+        sonarCtx.fillRect(0, 0, sonarWidth, sonarHeight);
+
+        sonarCtx.fillStyle = '#1c2d1c'; // Pixel dark color
+
+        // Draw Scrolling Bottom Profile
+        sonarCtx.beginPath();
+        sonarCtx.moveTo(0, sonarHeight);
+        for (let x = 0; x < sonarWidth; x++) {
+            sonarCtx.lineTo(x, depthHistory[x]);
+        }
+        sonarCtx.lineTo(sonarWidth, sonarHeight);
+        sonarCtx.fill();
+
+        // Draw Bottom Structure Details
+        for (let x = 0; x < sonarWidth; x += 4) {
+            const y = depthHistory[x];
+            sonarCtx.fillRect(x, y, 2, sonarHeight - y);
+        }
+
+        // Draw Fish Arches (Classic LCD curve style)
+        sonarCtx.lineWidth = 2;
+        sonarCtx.strokeStyle = '#1c2d1c';
+        fishArches.forEach(f => {
+            sonarCtx.beginPath();
+            sonarCtx.arc(f.x, f.y + f.size, f.size, Math.PI * 1.2, Math.PI * 1.8);
+            sonarCtx.stroke();
+        });
+    }
+
+    // --- MAIN 3D & GAME LOOP ---
+    function gameLoop() {
+        // Apply Navigation Controls via Joystick Vector
+        if (currentState === STATE.NAV) {
+            boat.speed = -inputVector.y * 0.5; // Up on stick = forward
+            boat.angle += inputVector.x * 0.03;
+            boat.x += Math.sin(boat.angle) * boat.speed;
+            boat.z += Math.cos(boat.angle) * boat.speed;
+        }
+
+        // Decay Tension continuously during reeling battle
+        if (currentState === STATE.REELING) {
+            lineTension = Math.max(0, lineTension - 0.4);
+            if (fishDistance <= 0) {
+                statusEl.innerText = "FISH AT BOAT! CLICK HOOK TO LAND";
+            }
+        }
+
+        // Render Main View (Pseudo 3D Water & Horizon)
+        ctx.fillStyle = '#1a3c40'; // Deep lake tint
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Horizon / Sky
+        ctx.fillStyle = '#2d545e';
+        ctx.fillRect(0, 0, canvas.width, canvas.height * 0.4);
+
+        // Water surface lines
+        ctx.strokeStyle = '#142d33';
+        ctx.lineWidth = 2;
+        for (let i = canvas.height * 0.4; i < canvas.height; i += 15) {
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(canvas.width, i);
+            ctx.stroke();
+        }
+
+        // Tension Bar UI during battle
+        if (currentState === STATE.REELING) {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(canvas.width / 2 - 100, canvas.height - 80, 200, 20);
+            ctx.fillStyle = lineTension > 80 ? 'red' : 'limegreen';
+            ctx.fillRect(canvas.width / 2 - 100, canvas.height - 80, lineTension * 2, 20);
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(`DIST: ${Math.round(fishDistance)}FT | TENSION`, canvas.width / 2, canvas.height - 90);
+        }
+
+        updateSonar();
+        requestAnimationFrame(gameLoop);
+    }
+
+    requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
