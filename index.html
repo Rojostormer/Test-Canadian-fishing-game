@@ -3,34 +3,44 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>Canadian Waters — First-Person Fishing</title>
+<title>Lake Erie Trophy Angler</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
-html,body{margin:0;padding:0;background:#030c10;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;height:100%;overflow:hidden}
+html,body{margin:0;padding:0;background:#02090f;color:#fff;font-family:'Courier New',Courier,monospace;height:100%;overflow:hidden}
 #gameContainer{position:relative;width:100vw;height:100vh;background:#000}
 #viewCanvas{width:100%;height:100%;display:block}
 
-/* UI Overlays */
-.hud{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-space-between;padding:16px;z-index:10}
+/* Retro Game Overlays */
+.hud{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:12px;z-index:10}
 .top-bar{display:flex;justify-content:space-between;align-items:flex-start}
-.brand h1{margin:0;font-size:22px;letter-spacing:1px;background:linear-gradient(180deg,#fff,#88c5cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.brand .sub{font-size:11px;color:#7a9cb0;font-weight:700}
-.stats{text-align:right;font-size:14px;font-weight:800;color:#e2f1f8;background:rgba(3,12,16,0.6);padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.15)}
+.brand h1{margin:0;font-size:20px;letter-spacing:2px;color:#00ffcc;text-shadow:0 0 8px rgba(0,255,204,0.6)}
+.brand .sub{font-size:10px;color:#7a9cb0;font-weight:700}
+.stats{text-align:right;font-size:12px;font-weight:700;color:#00ffcc;background:rgba(2,15,25,0.85);padding:6px 10px;border:2px solid #00ffcc;box-shadow:0 0 10px rgba(0,255,204,0.2)}
 
-.controls-panel{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:12px;pointer-events:auto;background:rgba(3,12,16,0.85);padding:12px 20px;border-radius:20px;border:1px solid rgba(255,255,255,0.2);backdrop-filter:blur(10px)}
-.btn{height:48px;padding:0 24px;border-radius:12px;border:0;font-size:14px;font-weight:900;color:#fff;cursor:pointer;background:linear-gradient(135deg,#00b4d8,#0077b6);box-shadow:0 4px 12px rgba(0,0,0,0.4);transition:transform 0.1s}
-.btn:active{transform:scale(0.96)}
-.btn.cast{background:linear-gradient(135deg,#ff7b00,#e65100)}
-.btn.secondary{background:linear-gradient(135deg,#2b3a42,#1a252c)}
+/* Sonar / Fish Finder (Rapala Style) */
+.fish-finder{position:absolute;top:50px;right:12px;width:160px;height:140px;background:#001a00;border:3px solid #00ff00;box-shadow:0 0 12px rgba(0,255,0,0.4);pointer-events:auto;overflow:hidden;border-radius:4px}
+.fish-finder-header{background:#003300;color:#00ff00;font-size:9px;text-align:center;padding:2px;font-weight:bold;letter-spacing:1px;border-bottom:1px solid #00ff00}
+#sonarCanvas{width:100%;height:118px;display:block}
 
-.tackle-selector{position:absolute;top:70px;left:16px;pointer-events:auto;background:rgba(3,12,16,0.75);padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);width:220px}
-.tackle-selector label{font-size:10px;color:#a0c4d6;font-weight:800;display:block;margin-bottom:4px}
-.tackle-selector select{width:100%;height:36px;background:#12212b;color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:0 8px;font-weight:700;margin-bottom:8px}
+/* Lake Erie Map Display */
+.map-display{position:absolute;top:50px;left:12px;width:160px;height:120px;background:#05131d;border:2px solid #00b4d8;pointer-events:auto;border-radius:4px}
+.map-header{background:#0a2536;color:#00b4d8;font-size:9px;text-align:center;padding:2px;font-weight:bold}
+#mapCanvas{width:100%;height:100px;display:block}
 
-.status-msg{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);font-size:24px;font-weight:900;text-shadow:0 2px 10px rgba(0,0,0,0.8);text-align:center;pointer-events:none;opacity:0;transition:opacity 0.3s}
+.controls-panel{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto;background:rgba(2,15,25,0.9);padding:10px;border:2px solid #00ffcc}
+.btn{height:42px;padding:0 16px;border:2px solid #00ffcc;font-family:inherit;font-size:12px;font-weight:900;color:#00ffcc;background:#031826;cursor:pointer;box-shadow:0 0 8px rgba(0,255,204,0.3)}
+.btn:active{background:#00ffcc;color:#000}
+.btn.cast{border-color:#ff9900;color:#ff9900;box-shadow:0 0 8px rgba(255,153,0,0.3)}
+.btn.cast:active{background:#ff9900;color:#000}
+
+.tackle-selector{position:absolute;bottom:70px;left:12px;pointer-events:auto;background:rgba(2,15,25,0.85);padding:8px;border:1px solid #00ffcc;width:180px}
+.tackle-selector label{font-size:9px;color:#00ffcc;display:block;margin-bottom:2px}
+.tackle-selector select{width:100%;height:28px;background:#02090f;color:#fff;border:1px solid #00ffcc;font-family:inherit;font-size:11px;margin-bottom:6px}
+
+.status-msg{position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);font-size:20px;font-weight:bold;color:#ffff00;text-shadow:2px 2px #000;pointer-events:none;opacity:0;transition:opacity 0.2s;text-align:center}
 .status-msg.show{opacity:1}
 
-.modal{position:absolute;inset:0;background:rgba(3,12,16,0.9);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.modal{position:absolute;inset:0;background:rgba(0,0,0,0.85);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
 .hidden{display:none !important}
 </style>
 </head>
@@ -42,44 +52,55 @@ html,body{margin:0;padding:0;background:#030c10;color:#fff;font-family:-apple-sy
   <div class="hud">
     <div class="top-bar">
       <div class="brand">
-        <h1>CANADIAN WATERS</h1>
-        <div class="sub">First-Person Angler</div>
+        <h1>LAKE ERIE ANGLER</h1>
+        <div class="sub">RAPALA-STYLE PRO TOURNAMENT</div>
       </div>
       <div class="stats">
-        Cash: $<span id="money">100</span> | XP: <span id="xp">0</span>
+        CASH: $<span id="money">150</span> | FISH: <span id="caughtCount">0</span>
       </div>
     </div>
 
+    <div class="map-display">
+      <div class="map-header">LAKE ERIE GPS (DEPTH CONTOURS)</div>
+      <canvas id="mapCanvas"></canvas>
+    </div>
+
+    <div class="fish-finder">
+      <div class="fish-finder-header">SONAR FISH FINDER</div>
+      <canvas id="sonarCanvas"></canvas>
+    </div>
+
     <div class="tackle-selector">
-      <label>EQUIPPED LURE</label>
+      <label>RAPALA LURE SELECT</label>
       <select id="lureSelect">
-        <option value="spoon">Silver Spoon (Salmon/Trout)</option>
-        <option value="jig">Jig (Bass/Walleye)</option>
-        <option value="crank">Minnow Crank (Pike/Bass)</option>
-        <option value="topwater">Topwater Frog (Muskie/Bass)</option>
+        <option value="shad">Shad Rap (Deep Crank)</option>
+        <option value="husky">Husky Jerk (Suspended)</option>
+        <option value="skitter">Skitter Walk (Topwater)</option>
+        <option value="dt">DT-10 (Structure Crank)</option>
       </select>
 
       <label>BAIT ATTRACTION</label>
       <select id="baitSelect">
-        <option value="none">None (Pure Lure Action)</option>
-        <option value="worm">Nightcrawler (+20% Catch)</option>
-        <option value="minnow">Live Minnow (+35% Catch)</option>
-        <option value="roe">Salmon Roe (+30% Trout/Salmon)</option>
+        <option value="none">None (Lure Only)</option>
+        <option value="minnow">Emerald Shiner (+30%)</option>
+        <option value="nightcrawler">Nightcrawler (+20%)</option>
       </select>
     </div>
 
-    <div id="statusText" class="status-msg">Cast your line into the lake</div>
+    <div id="statusText" class="status-msg">Use WASD or Controls to Navigate</div>
 
     <div class="controls-panel">
+      <button class="btn" id="btnFWD">▲ FWD</button>
+      <button class="btn" id="btnREV">▼ REV</button>
+      <button class="btn" id="btnLEFT">◀ STEER</button>
+      <button class="btn" id="btnRIGHT">STEER ▶</button>
       <button class="btn cast" id="actionBtn">CAST LINE</button>
-      <button class="btn secondary" id="steerLeftBtn">◀ STEER</button>
-      <button class="btn secondary" id="steerRightBtn">STEER ▶</button>
     </div>
   </div>
 
   <div id="catchModal" class="modal hidden">
-    <h2 id="catchTitle" style="font-size:28px;margin:0 0 10px;color:#00ffcc">FISH ON!</h2>
-    <div id="catchDetails" style="font-size:18px;margin-bottom:20px">You caught a 12 lbs Smallmouth Bass!</div>
+    <h2 id="catchTitle" style="font-size:24px;color:#00ffcc;margin:0 0 10px">RECORD CATCH!</h2>
+    <div id="catchDetails" style="font-size:16px;margin-bottom:20px">You caught a 8.5 lb Walleye!</div>
     <button class="btn" id="claimBtn">KEEP FISH</button>
   </div>
 </div>
@@ -87,249 +108,410 @@ html,body{margin:0;padding:0;background:#030c10;color:#fff;font-family:-apple-sy
 <script>
 const canvas = document.getElementById('viewCanvas');
 const ctx = canvas.getContext('2d');
+const sonarCanvas = document.getElementById('sonarCanvas');
+const sonarCtx = sonarCanvas.getContext('2d');
+const mapCanvas = document.getElementById('mapCanvas');
+const mapCtx = mapCanvas.getContext('2d');
 
-// --- Game State ---
-let gameState = 'idle'; // 'idle', 'casting', 'waiting', 'hooked'
-let cash = 100;
-let xp = 0;
-let boatAngle = 0; // Steering orientation
-let lineProgress = 0; // Cast distance
-let biteTimer = 0;
+// --- Game Engine Variables ---
+let gameState = 'navigating'; // 'navigating', 'casting', 'waiting', 'hooked'
+let cash = 150;
+let fishCount = 0;
 
-// Tackle System Data
+// Boat Navigation Physics (Lake Erie World Bounds)
+let boat = {
+  x: 120, // Map Coordinates (0 to 300)
+  y: 80,
+  angle: 0,
+  speed: 0,
+  maxSpeed: 1.8,
+  accel: 0.05,
+  friction: 0.96,
+  turnSpeed: 0.04
+};
+
+// Controls input tracking
+const keys = { w: false, s: false, a: false, d: false };
+
+// Lake Erie Topography & Depth Map Simulation
+// Lake Erie: Shallow Western Basin (left), Deeper Central/Eastern Basins (right)
+function getLakeDepth(x, y) {
+  // Normalize coordinates (0-1)
+  let nx = x / 300;
+  let ny = y / 200;
+  
+  // Depth calculation based on Lake Erie's real topography
+  let depth = 10 + (nx * 50) + Math.sin(ny * Math.PI) * 15;
+  
+  // Specific Structure: Pelee Island Shoal / Trench
+  let dx = x - 100, dy = y - 70;
+  let distToShoal = Math.sqrt(dx*dx + dy*dy);
+  if (distToShoal < 30) {
+    depth -= (30 - distToShoal) * 0.5; // Shallow structure reef
+  }
+  return Math.max(5, Math.min(65, depth));
+}
+
+// Fish Population Simulation across Lake Erie Map
+let fishSchools = [];
+for (let i = 0; i < 25; i++) {
+  fishSchools.push({
+    x: Math.random() * 280 + 10,
+    y: Math.random() * 180 + 10,
+    depth: Math.random() * 40 + 10,
+    size: Math.floor(Math.random() * 4) + 1,
+    type: Math.random() > 0.4 ? 'Walleye' : (Math.random() > 0.5 ? 'Smallmouth Bass' : 'Yellow Perch')
+  });
+}
+
+// Tackle Configurations
 const LURES = {
-  spoon: { name: 'Silver Spoon', targets: ['trout', 'salmon'], power: 1.2 },
-  jig: { name: 'Jig', targets: ['bass', 'walleye'], power: 1.0 },
-  crank: { name: 'Minnow Crank', targets: ['pike', 'bass'], power: 1.3 },
-  topwater: { name: 'Topwater Frog', targets: ['muskie', 'bass'], power: 1.5 }
+  shad: { name: 'Shad Rap', depthRange: [8, 15], power: 1.3 },
+  husky: { name: 'Husky Jerk', depthRange: [4, 10], power: 1.1 },
+  skitter: { name: 'Skitter Walk', depthRange: [0, 4], power: 1.5 },
+  dt: { name: 'DT-10', depthRange: [10, 25], power: 1.4 }
 };
 
 const BAITS = {
-  none: { name: 'None', bonus: 1.0 },
-  worm: { name: 'Nightcrawler', bonus: 1.2 },
-  minnow: { name: 'Live Minnow', bonus: 1.35 },
-  roe: { name: 'Salmon Roe', bonus: 1.3 }
+  none: { bonus: 1.0 },
+  minnow: { bonus: 1.3 },
+  nightcrawler: { bonus: 1.2 }
 };
 
-const FISH_SPECIES = {
-  bass: { name: 'Smallmouth Bass', baseWeight: 4, value: 15 },
-  pike: { name: 'Northern Pike', baseWeight: 12, value: 35 },
-  walleye: { name: 'Walleye', baseWeight: 6, value: 25 },
-  trout: { name: 'Lake Trout', baseWeight: 14, value: 45 },
-  salmon: { name: 'Chinook Salmon', baseWeight: 18, value: 60 },
-  muskie: { name: 'Muskellunge', baseWeight: 22, value: 85 }
-};
+// Input Handling Setup
+window.addEventListener('keydown', e => handleKey(e.key, true));
+window.addEventListener('keyup', e => handleKey(e.key, false));
 
-// Resize Handler
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+function handleKey(key, isPressed) {
+  let k = key.toLowerCase();
+  if (k === 'w' || k === 'arrowup') keys.w = isPressed;
+  if (k === 's' || k === 'arrowdown') keys.s = isPressed;
+  if (k === 'a' || k === 'arrowleft') keys.a = isPressed;
+  if (k === 'd' || k === 'arrowright') keys.d = isPressed;
 }
-window.addEventListener('resize', resize);
-resize();
 
-// --- Input Mechanics ---
+// Touch/On-Screen Steering
+const bindBtn = (id, key) => {
+  const btn = document.getElementById(id);
+  btn.addEventListener('mousedown', () => keys[key] = true);
+  btn.addEventListener('mouseup', () => keys[key] = false);
+  btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; });
+  btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; });
+};
+bindBtn('btnFWD', 'w');
+bindBtn('btnREV', 's');
+bindBtn('btnLEFT', 'a');
+bindBtn('btnRIGHT', 'd');
+
+// Game Action Trigger (Cast / Hook / Retrieve)
 const actionBtn = document.getElementById('actionBtn');
-const statusText = document.getElementById('statusText');
-
 actionBtn.addEventListener('click', () => {
-  if (gameState === 'idle') {
-    startCast();
+  if (gameState === 'navigating') {
+    startCasting();
   } else if (gameState === 'waiting') {
-    retrieveLine(false);
+    retrieveLine();
   } else if (gameState === 'hooked') {
-    catchFish();
+    hookFish();
   }
 });
 
-document.getElementById('steerLeftBtn').addEventListener('click', () => { boatAngle -= 0.1; });
-document.getElementById('steerRightBtn').addEventListener('click', () => { boatAngle += 0.1; });
-
-function startCast() {
+let lineProgress = 0;
+function startCasting() {
   gameState = 'casting';
+  boat.speed = 0;
   lineProgress = 0;
-  actionBtn.textContent = 'REELING...';
-  showStatus('Casting Line...');
+  actionBtn.textContent = 'CASTING...';
+  showStatus('Casting lure into Lake Erie structure...');
 
-  let castInterval = setInterval(() => {
-    lineProgress += 0.05;
+  let castAnim = setInterval(() => {
+    lineProgress += 0.08;
     if (lineProgress >= 1.0) {
-      clearInterval(castInterval);
+      clearInterval(castAnim);
       gameState = 'waiting';
       actionBtn.textContent = 'RETRIEVE';
-      showStatus('Waiting for a bite...');
-      checkBiteChance();
+      showStatus('Lure deployed! Watching Sonar...');
+      checkBiteLogic();
     }
-  }, 30);
+  }, 40);
 }
 
-function retrieveLine(caught = false) {
-  gameState = 'idle';
+function retrieveLine() {
+  gameState = 'navigating';
   actionBtn.textContent = 'CAST LINE';
-  showStatus(caught ? 'Fish Retained!' : 'Line Retrieved');
+  showStatus('Engaging Trolling Motor');
   lineProgress = 0;
 }
 
-function checkBiteChance() {
+function checkBiteLogic() {
   if (gameState !== 'waiting') return;
 
-  const selectedLure = LURES[document.getElementById('lureSelect').value];
-  const selectedBait = BAITS[document.getElementById('baitSelect').value];
+  let currentDepth = getLakeDepth(boat.x, boat.y);
+  let lure = LURES[document.getElementById('lureSelect').value];
+  let bait = BAITS[document.getElementById('baitSelect').value];
 
-  // Base attraction calculation
-  const attractionScore = selectedLure.power * selectedBait.bonus;
-  const timeToBite = Math.max(2000, 8000 - (attractionScore * 2000));
+  // Check fish proximity via Sonar position
+  let nearFish = fishSchools.some(f => {
+    let dx = f.x - boat.x;
+    let dy = f.y - boat.y;
+    return Math.sqrt(dx*dx + dy*dy) < 20;
+  });
+
+  let lureDepthMatch = currentDepth >= lure.depthRange[0] && currentDepth <= lure.depthRange[1] + 15;
+  let biteChance = (nearFish ? 0.6 : 0.15) * lure.power * bait.bonus;
 
   setTimeout(() => {
-    if (gameState === 'waiting') {
+    if (gameState === 'waiting' && Math.random() < biteChance) {
       gameState = 'hooked';
-      actionBtn.textContent = 'HOOK FISH!';
-      showStatus('STRIKE! Click to Hook!');
+      actionBtn.textContent = 'SET HOOK!';
+      showStatus('FISH ON! SET THE HOOK!');
     }
-  }, timeToBite);
+  }, 2500 + Math.random() * 3000);
 }
 
-function catchFish() {
-  const selectedLure = LURES[document.getElementById('lureSelect').value];
-  const targetPool = selectedLure.targets;
-  const chosenSpeciesKey = targetPool[Math.floor(Math.random() * targetPool.length)];
-  const species = FISH_SPECIES[chosenSpeciesKey];
+function hookFish() {
+  let targetFish = ['Walleye', 'Smallmouth Bass', 'Yellow Perch', 'Lake Trout'];
+  let species = targetFish[Math.floor(Math.random() * targetFish.length)];
+  let weight = (Math.random() * 8 + 2).toFixed(1);
+  let value = Math.round(weight * 18);
 
-  const weight = (species.baseWeight * (0.8 + Math.random() * 0.5)).toFixed(1);
-  const reward = Math.round(weight * species.value);
-
-  cash += reward;
-  xp += Math.round(reward * 1.5);
-
+  cash += value;
+  fishCount++;
   document.getElementById('money').textContent = cash;
-  document.getElementById('xp').textContent = xp;
+  document.getElementById('caughtCount').textContent = fishCount;
 
-  document.getElementById('catchTitle').textContent = `CAUGHT A ${species.name.toUpperCase()}!`;
-  document.getElementById('catchDetails').textContent = `Weight: ${weight} lbs | Earned: $${reward}`;
+  document.getElementById('catchTitle').textContent = `TOURNAMENT CATCH!`;
+  document.getElementById('catchDetails').textContent = `Caught a ${weight} lb ${species}! Earned $${value}`;
   document.getElementById('catchModal').classList.remove('hidden');
 }
 
 document.getElementById('claimBtn').addEventListener('click', () => {
   document.getElementById('catchModal').classList.add('hidden');
-  retrieveLine(true);
+  retrieveLine();
 });
 
 function showStatus(text) {
-  statusText.textContent = text;
-  statusText.classList.add('show');
-  setTimeout(() => statusText.classList.remove('show'), 2500);
+  const el = document.getElementById('statusText');
+  el.textContent = text;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
 }
 
-// --- First Person Rendering Engine ---
-function render() {
+// Window Sizing
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  sonarCanvas.width = 160;
+  sonarCanvas.height = 118;
+  mapCanvas.width = 160;
+  mapCanvas.height = 100;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// --- Sonar Display Renderer (Rapala Retro Style) ---
+let sonarHistory = [];
+function updateSonar() {
+  let depth = getLakeDepth(boat.x, boat.y);
+  
+  // Detect fish under boat
+  let fishDetected = fishSchools.some(f => Math.hypot(f.x - boat.x, f.y - boat.y) < 12);
+  
+  sonarHistory.push({ depth: depth, fish: fishDetected });
+  if (sonarHistory.length > 80) sonarHistory.shift();
+
+  // Draw Sonar LCD
+  sonarCtx.fillStyle = '#001a00';
+  sonarCtx.fillRect(0, 0, 160, 118);
+
+  // Grid lines
+  sonarCtx.strokeStyle = 'rgba(0, 255, 0, 0.15)';
+  sonarCtx.lineWidth = 1;
+  for (let i = 0; i < 118; i += 20) {
+    sonarCtx.beginPath();
+    sonarCtx.moveTo(0, i);
+    sonarCtx.lineTo(160, i);
+    sonarCtx.stroke();
+  }
+
+  // Draw Bottom Topography on Sonar
+  sonarCtx.beginPath();
+  sonarCtx.strokeStyle = '#00ff00';
+  sonarCtx.lineWidth = 2;
+  for (let x = 0; x < sonarHistory.length; x++) {
+    let screenX = x * 2;
+    let screenY = (sonarHistory[x].depth / 65) * 90 + 20;
+    if (x === 0) sonarCtx.moveTo(screenX, screenY);
+    else sonarCtx.lineTo(screenX, screenY);
+
+    // Draw Fish Arches on Sonar
+    if (sonarHistory[x].fish && Math.random() > 0.4) {
+      sonarCtx.fillStyle = '#ffff00';
+      sonarCtx.fillRect(screenX, screenY - 15 - Math.random() * 20, 4, 3);
+    }
+  }
+  sonarCtx.stroke();
+
+  // Depth Text Indicator
+  sonarCtx.fillStyle = '#00ff00';
+  sonarCtx.font = '10px Courier New';
+  sonarCtx.fillText(`DEPTH: ${depth.toFixed(1)}ft`, 6, 12);
+}
+
+// --- Lake Erie Topo Map Renderer ---
+function drawLakeErieMap() {
+  mapCtx.fillStyle = '#05131d';
+  mapCtx.fillRect(0, 0, 160, 100);
+
+  // Draw Lake Erie Contour Geometry
+  mapCtx.strokeStyle = '#005577';
+  mapCtx.lineWidth = 1;
+  for (let d = 10; d <= 50; d += 10) {
+    mapCtx.beginPath();
+    for (let x = 0; x < 160; x += 10) {
+      let mapX = (x / 160) * 300;
+      let mapY = 100;
+      let calcD = getLakeDepth(mapX, mapY);
+      if (Math.abs(calcD - d) < 5) {
+        mapCtx.lineTo(x, d * 1.5);
+      }
+    }
+    mapCtx.stroke();
+  }
+
+  // Draw Boat Position Marker
+  let boatMapX = (boat.x / 300) * 160;
+  let boatMapY = (boat.y / 200) * 100;
+
+  mapCtx.fillStyle = '#ff0000';
+  mapCtx.beginPath();
+  mapCtx.arc(boatMapX, boatMapY, 3, 0, Math.PI * 2);
+  mapCtx.fill();
+}
+
+// --- Main 3D Perspective Render Loop ---
+function updatePhysics() {
+  if (gameState === 'navigating') {
+    if (keys.w) boat.speed = Math.min(boat.speed + boat.accel, boat.maxSpeed);
+    if (keys.s) boat.speed = Math.max(boat.speed - boat.accel, -boat.maxSpeed * 0.5);
+    if (keys.a) boat.angle -= boat.turnSpeed;
+    if (keys.d) boat.angle += boat.turnSpeed;
+
+    boat.speed *= boat.friction;
+    boat.x += Math.sin(boat.angle) * boat.speed;
+    boat.y -= Math.cos(boat.angle) * boat.speed;
+
+    // Keep boat inside Lake Erie map boundaries
+    boat.x = Math.max(10, Math.min(290, boat.x));
+    boat.y = Math.max(10, Math.min(190, boat.y));
+  }
+}
+
+function render3DView() {
   const w = canvas.width;
   const h = canvas.height;
+  const horizon = h * 0.42;
 
-  // 1. Sky & Horizon
-  const horizon = h * 0.45;
-  const skyGrad = ctx.createLinearGradient(0, 0, 0, horizon);
-  skyGrad.addColorStop(0, '#091f2c');
-  skyGrad.addColorStop(1, '#28586f');
+  // 1. Lake Erie Sunset / Sky Rendering
+  let skyGrad = ctx.createLinearGradient(0, 0, 0, horizon);
+  skyGrad.addColorStop(0, '#041019');
+  skyGrad.addColorStop(1, '#1b4958');
   ctx.fillStyle = skyGrad;
   ctx.fillRect(0, 0, w, horizon);
 
-  // 2. Lake Water Rendering
-  const waterGrad = ctx.createLinearGradient(0, horizon, 0, h);
-  waterGrad.addColorStop(0, '#0b3240');
-  waterGrad.addColorStop(1, '#020b10');
+  // 2. Lake Water Perspective
+  let waterGrad = ctx.createLinearGradient(0, horizon, 0, h);
+  waterGrad.addColorStop(0, '#092d38');
+  waterGrad.addColorStop(1, '#01090d');
   ctx.fillStyle = waterGrad;
   ctx.fillRect(0, horizon, w, h - horizon);
 
-  // Distant Shoreline Perspective
-  ctx.fillStyle = '#05141c';
+  // Shoreline Island / Topography Horizon (Reacts to boat rotation)
+  ctx.fillStyle = '#061721';
   ctx.beginPath();
   ctx.moveTo(0, horizon);
-  for (let x = 0; x <= w; x += 40) {
-    let treeH = Math.sin((x + boatAngle * 200) * 0.01) * 15 + 10;
-    ctx.lineTo(x, horizon - treeH);
+  for (let x = 0; x <= w; x += 30) {
+    let hill = Math.sin((x + boat.angle * 300) * 0.008) * 18 + Math.cos(boat.x * 0.05) * 10;
+    ctx.lineTo(x, horizon - Math.max(2, hill));
   }
   ctx.lineTo(w, horizon);
-  ctx.closePath();
   ctx.fill();
 
-  // 3. First Person Boat Interior (Cockpit / Deck)
+  // 3. First-Person Boat Interior & Dashboard (Rapala Bass Masters Look)
   ctx.save();
   
-  // Outer Bow Hull (Dashboard & Sides)
-  ctx.fillStyle = '#111b21';
+  // Gunwale / Hull Bow
+  ctx.fillStyle = '#0e181e';
   ctx.beginPath();
   ctx.moveTo(0, h);
-  ctx.lineTo(w * 0.15, horizon + (h * 0.2));
-  ctx.lineTo(w * 0.5, horizon + (h * 0.15));
-  ctx.lineTo(w * 0.85, horizon + (h * 0.2));
+  ctx.lineTo(w * 0.12, horizon + (h * 0.22));
+  ctx.lineTo(w * 0.5, horizon + (h * 0.18));
+  ctx.lineTo(w * 0.88, horizon + (h * 0.22));
   ctx.lineTo(w, h);
-  ctx.closePath();
   ctx.fill();
 
-  // Boat Interior Trim / Moldings
-  ctx.strokeStyle = '#2c3e47';
-  ctx.lineWidth = 6;
+  // Boat Console Trim
+  ctx.strokeStyle = '#00ffcc';
+  ctx.lineWidth = 2;
   ctx.stroke();
 
-  // Steering Console (Center Dashboard)
-  const dashWidth = w * 0.3;
-  const dashLeft = (w - dashWidth) / 2;
-  ctx.fillStyle = '#1a262c';
-  ctx.fillRect(dashLeft, h - 140, dashWidth, 140);
-  ctx.strokeStyle = '#3a505c';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(dashLeft, h - 140, dashWidth, 140);
+  // Windshield & Dashboard Center
+  ctx.fillStyle = '#091319';
+  ctx.fillRect(w * 0.35, h - 120, w * 0.3, 120);
+  ctx.strokeRect(w * 0.35, h - 120, w * 0.3, 120);
 
-  // Dash Gauges
-  ctx.fillStyle = '#00ffcc';
+  // Steering Wheel
+  ctx.strokeStyle = '#3a5866';
+  ctx.lineWidth = 8;
   ctx.beginPath();
-  ctx.arc(dashLeft + 50, h - 70, 20, 0, Math.PI * 2);
-  ctx.arc(dashLeft + dashWidth - 50, h - 70, 20, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.arc(w * 0.5, h - 40, 35, 0, Math.PI * 2);
+  ctx.stroke();
 
   ctx.restore();
 
-  // 4. Fishing Rod & Line Perspective
-  if (gameState !== 'idle') {
+  // 4. Fishing Line Mechanics
+  if (gameState !== 'navigating') {
     ctx.save();
-    // Rod Handle (Bottom Right)
-    ctx.strokeStyle = '#4a3525';
-    ctx.lineWidth = 14;
+    let rodX = w * 0.7;
+    let rodY = h * 0.52;
+    let lureX = w * 0.5;
+    let lureY = horizon + (lineProgress * (h * 0.25));
+
+    // Fishing Rod Shaft
+    ctx.strokeStyle = '#2b1d0c';
+    ctx.lineWidth = 8;
     ctx.beginPath();
-    ctx.moveTo(w * 0.75, h);
-    ctx.lineTo(w * 0.6, h * 0.55);
+    ctx.moveTo(w * 0.85, h);
+    ctx.lineTo(rodX, rodY);
     ctx.stroke();
 
-    // Rod Tip Line
-    const rodTipX = w * 0.6;
-    const rodTipY = h * 0.55;
-
-    // Bobber / Lure Position
-    const lureX = w * 0.5 + (Math.sin(boatAngle) * 100);
-    const lureY = horizon + (lineProgress * (h * 0.25));
-
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-    ctx.lineWidth = 1.5;
+    // Fishing Line
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(rodTipX, rodTipY);
-    ctx.quadraticCurveTo(rodTipX, lureY, lureX, lureY);
+    ctx.moveTo(rodX, rodY);
+    ctx.quadraticCurveTo(rodX, lureY, lureX, lureY);
     ctx.stroke();
 
-    // Lure Splash / Float Indicator
-    if (lineProgress > 0.1) {
-      ctx.fillStyle = gameState === 'hooked' ? '#ff0055' : '#ff7b00';
-      ctx.beginPath();
-      ctx.arc(lureX, lureY, gameState === 'hooked' ? 8 : 5, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    // Lure Splash
+    ctx.fillStyle = gameState === 'hooked' ? '#ff0000' : '#ff9900';
+    ctx.beginPath();
+    ctx.arc(lureX, lureY, gameState === 'hooked' ? 7 : 4, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.restore();
   }
-
-  requestAnimationFrame(render);
 }
 
-requestAnimationFrame(render);
+// --- Main Game Loop ---
+function loop() {
+  updatePhysics();
+  render3DView();
+  updateSonar();
+  drawLakeErieMap();
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
